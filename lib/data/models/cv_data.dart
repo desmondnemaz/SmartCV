@@ -65,6 +65,38 @@ class Experience {
   });
 }
 
+class Internship {
+  String company;
+  String position;
+  String startDate;
+  String endDate;
+  String description;
+
+  Internship({
+    this.company = '',
+    this.position = '',
+    this.startDate = '',
+    this.endDate = '',
+    this.description = '',
+  });
+}
+
+class Reference {
+  String name;
+  String position;
+  String company;
+  String email;
+  String phone;
+
+  Reference({
+    this.name = '',
+    this.position = '',
+    this.company = '',
+    this.email = '',
+    this.phone = '',
+  });
+}
+
 class Skill {
   String name;
 
@@ -73,19 +105,90 @@ class Skill {
   });
 }
 
+class CustomSection {
+  String id;
+  String title;
+  String description;
+  bool isVisible;
+
+  CustomSection({
+    required this.id,
+    this.title = 'Custom Section',
+    this.description = '',
+    this.isVisible = true,
+  });
+}
+
+class SectionTitles {
+  String personalInfo;
+  bool showPersonalInfo;
+  String professionalSummary;
+  bool showProfessionalSummary;
+  String experience;
+  bool showExperience;
+  String internships;
+  bool showInternships;
+  String education;
+  bool showEducation;
+  String skills;
+  bool showSkills;
+  String references;
+  bool showReferences;
+
+  SectionTitles({
+    this.personalInfo = 'Personal Information',
+    this.showPersonalInfo = true,
+    this.professionalSummary = 'Professional Summary',
+    this.showProfessionalSummary = true,
+    this.experience = 'Experience',
+    this.showExperience = true,
+    this.internships = 'Internships',
+    this.showInternships = true,
+    this.education = 'Education',
+    this.showEducation = true,
+    this.skills = 'Skills',
+    this.showSkills = true,
+    this.references = 'References',
+    this.showReferences = true,
+  });
+}
+
 class CVData {
   PersonalInfo personalInfo;
+  SectionTitles sectionTitles;
   List<Education> education;
   List<Experience> experience;
+  List<Internship> internships;
+  List<Reference> references;
   List<Skill> skills;
+  List<CustomSection> customSections;
+  List<String> sectionOrder;
 
   CVData({
     PersonalInfo? personalInfo,
+    SectionTitles? sectionTitles,
     List<Education>? education,
     List<Experience>? experience,
+    List<Internship>? internships,
+    List<Reference>? references,
     List<Skill>? skills,
+    List<CustomSection>? customSections,
+    List<String>? sectionOrder,
   })  : personalInfo = personalInfo ?? PersonalInfo(),
+        sectionTitles = sectionTitles ?? SectionTitles(),
         education = education ?? [],
         experience = experience ?? [],
-        skills = skills ?? [];
+        internships = internships ?? [],
+        references = references ?? [],
+        skills = skills ?? [],
+        customSections = customSections ?? [],
+        sectionOrder = sectionOrder ?? [
+          'personalInfo',
+          'professionalSummary',
+          'experience',
+          'internships',
+          'education',
+          'skills',
+          'references'
+        ];
 }

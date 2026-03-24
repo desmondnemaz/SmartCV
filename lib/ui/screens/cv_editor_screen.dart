@@ -5,6 +5,9 @@ import '../../providers/cv_provider.dart';
 import '../../services/pdf_service.dart';
 import '../../core/utils/responsive.dart';
 import '../../data/models/cv_data.dart';
+import 'package:flutter_quill/flutter_quill.dart' as fq;
+import 'dart:convert';
+import 'dart:async';
 
 class CVEditorScreen extends StatefulWidget {
   const CVEditorScreen({super.key});
@@ -30,11 +33,31 @@ class _FieldControllerPair {
   }
 }
 
+class _CustomSectionControllers {
+  final fq.QuillController quillController;
+  final ScrollController scrollController;
+  final FocusNode focusNode;
+
+  _CustomSectionControllers({
+    required this.quillController,
+    required this.scrollController,
+    required this.focusNode,
+  });
+
+  void dispose() {
+    quillController.dispose();
+    scrollController.dispose();
+    focusNode.dispose();
+  }
+}
+
 class _CVEditorScreenState extends State<CVEditorScreen> {
   late TextEditingController _summaryCtrl;
   late TextEditingController _jobTitleCtrl;
   String _headerAlignment = 'left';
   final List<_FieldControllerPair> _fieldControllers = [];
+  // Map to store Quill-related controllers for custom sections to persist state and dispose properly
+  final Map<String, _CustomSectionControllers> _customControllers = {};
 
   @override
   void initState() {
@@ -103,6 +126,9 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
     for (var pair in _fieldControllers) {
       pair.dispose();
     }
+    for (var controllers in _customControllers.values) {
+      controllers.dispose();
+    }
     super.dispose();
   }
 
@@ -138,24 +164,85 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
   }
 
   Widget _buildEditorForm() {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        _buildHeaderSection(),
-        _buildPersonalInfoSection(),
-        _buildProfessionalSummarySection(),
-        _buildExperienceSection(),
-        _buildEducationSection(),
-        _buildSkillsSection(),
-      ],
+    return Consumer<CVProvider>(
+      builder: (context, provider, child) {
+        final order = provider.cvData.sectionOrder;
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: _buildHeaderSection(),
+            ),
+            Expanded(
+              child: ReorderableListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                buildDefaultDragHandles: false,
+                onReorder: (oldIndex, newIndex) {
+                  provider.reorderSections(oldIndex, newIndex);
+                },
+                children: [
+                  for (int i = 0; i < order.length; i++)
+                    Row(
+                      key: ValueKey(order[i]),
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ReorderableDragStartListener(
+                          index: i,
+                          child: const Padding(
+                            padding: EdgeInsets.only(top: 14.0, right: 8.0, left: 4.0),
+                            child: Icon(Icons.drag_handle, color: Colors.grey),
+                          ),
+                        ),
+                        Expanded(child: _buildSectionByKey(order[i])),
+                      ],
+                    ),
+                  const SizedBox(key: ValueKey('footerSpacer'), height: 32),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  final id = 'custom_${DateTime.now().millisecondsSinceEpoch}';
+                  provider.addCustomSection(
+                    CustomSection(id: id),
+                  );
+                },
+                icon: const Icon(Icons.add),
+                label: const Text('Add Custom Section'),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 48),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
+
+  Widget _buildSectionByKey(String key) {
+    if (key.startsWith('custom_')) {
+      return _buildCustomSection(key);
+    }
+    switch (key) {
+      case 'personalInfo': return _buildPersonalInfoSection();
+      case 'professionalSummary': return _buildProfessionalSummarySection();
+      case 'experience': return _buildExperienceSection();
+      case 'internships': return _buildInternshipSection();
+      case 'education': return _buildEducationSection();
+      case 'skills': return _buildSkillsSection();
+      case 'references': return _buildReferencesSection();
+      default: return const SizedBox.shrink();
+    }
+  }
+
 
   Widget _buildHeaderSection() {
     return ExpansionTile(
       leading: const Icon(Icons.badge),
       title: const Text('Header'),
-      initiallyExpanded: true,
       childrenPadding: const EdgeInsets.all(16),
       children: [
         TextFormField(
@@ -194,208 +281,860 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
     );
   }
 
-  Widget _buildPersonalInfoSection() {
-    return ExpansionTile(
-      leading: const Icon(Icons.person),
-      title: const Text('Personal Information'),
-      initiallyExpanded: true,
-      childrenPadding: const EdgeInsets.all(16),
+
+
+  Widget _buildSectionHeader(BuildContext context, String currentTitle, bool isVisible, Function(String) onRename, VoidCallback onToggleVisibility) {
+    return Row(
       children: [
-        ..._fieldControllers.asMap().entries.map((entry) {
-          final index = entry.key;
-          final pair = entry.value;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+        Expanded(
+          child: Row(
+            children: [
+              Text(
+                currentTitle,
+                style: TextStyle(color: isVisible ? null : Colors.grey),
+              ),
+              if (!isVisible) ...[
+                const SizedBox(width: 8),
+                const Icon(Icons.visibility_off, size: 16, color: Colors.grey),
+              ],
+            ],
+          ),
+        ),
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.more_vert),
+          onSelected: (val) {
+            if (val == 'rename') {
+              _showRenameDialog(context, currentTitle, onRename);
+            } else if (val == 'toggle_visibility') {
+              onToggleVisibility();
+            }
+          },
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'rename',
+              child: Row(
+                children: [
+                  Icon(Icons.edit, size: 20),
+                  SizedBox(width: 8),
+                  Text('Rename section'),
+                ],
+              ),
+            ),
+            PopupMenuItem(
+              value: 'toggle_visibility',
+              child: Row(
+                children: [
+                  Icon(isVisible ? Icons.visibility_off : Icons.visibility, size: 20, color: isVisible ? Colors.red : Colors.green),
+                  const SizedBox(width: 8),
+                  Text(isVisible ? 'Hide from CV' : 'Show on CV', style: TextStyle(color: isVisible ? Colors.red : Colors.green)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  void _showRenameDialog(BuildContext context, String currentTitle, Function(String) onRename) {
+    final controller = TextEditingController(text: currentTitle);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rename section'),
+        content: TextFormField(
+          controller: controller,
+          decoration: const InputDecoration(labelText: 'Section Title'),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () {
+              if (controller.text.trim().isNotEmpty) {
+                onRename(controller.text.trim());
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPersonalInfoSection({Key? key}) {
+    return Consumer<CVProvider>(
+      key: key,
+      builder: (context, provider, _) {
+        final titles = provider.cvData.sectionTitles;
+        return ExpansionTile(
+          leading: const Icon(Icons.person),
+          title: _buildSectionHeader(context, titles.personalInfo, titles.showPersonalInfo, (val) {
+            titles.personalInfo = val;
+            provider.updateSectionTitles(titles);
+          }, () {
+            titles.showPersonalInfo = !titles.showPersonalInfo;
+            provider.updateSectionTitles(titles);
+          }),
+          childrenPadding: const EdgeInsets.all(16),
+          children: [
+            ..._fieldControllers.asMap().entries.map((entry) {
+              final index = entry.key;
+              final pair = entry.value;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: pair.titleCtrl,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                          color: Colors.blueGrey,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: pair.titleCtrl,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: Colors.blueGrey,
+                            ),
+                            decoration: const InputDecoration(
+                              hintText: 'Title',
+                              border: InputBorder.none,
+                              filled: false,
+                              contentPadding: EdgeInsets.zero,
+                              isDense: true,
+                            ),
+                          ),
                         ),
-                        decoration: const InputDecoration(
-                          hintText: 'Title',
-                          border: InputBorder.none,
-                          filled: false,
-                          contentPadding: EdgeInsets.zero,
-                          isDense: true,
-                        ),
+                        if (!pair.isCompulsory)
+                          IconButton(
+                            icon: const Icon(Icons.remove_circle_outline, color: Colors.grey, size: 18),
+                            onPressed: () => _removeFieldController(index),
+                            visualDensity: VisualDensity.compact,
+                          ),
+                      ],
+                    ),
+                    TextFormField(
+                      controller: pair.valueCtrl,
+                      decoration: const InputDecoration(
+                        hintText: 'Value',
+                        isDense: true,
                       ),
                     ),
-                    if (!pair.isCompulsory)
-                      IconButton(
-                        icon: const Icon(Icons.remove_circle_outline, color: Colors.grey, size: 18),
-                        onPressed: () => _removeFieldController(index),
-                        visualDensity: VisualDensity.compact,
-                      ),
                   ],
                 ),
-                TextFormField(
-                  controller: pair.valueCtrl,
-                  decoration: const InputDecoration(
-                    hintText: 'Value',
-                    isDense: true,
+              );
+            }),
+            TextButton.icon(
+              onPressed: () => _addFieldController(),
+              icon: const Icon(Icons.add),
+              label: const Text('Add Custom Field'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildProfessionalSummarySection({Key? key}) {
+    return Consumer<CVProvider>(
+      key: key,
+      builder: (context, provider, _) {
+        final titles = provider.cvData.sectionTitles;
+        return ExpansionTile(
+          leading: const Icon(Icons.description),
+          title: _buildSectionHeader(context, titles.professionalSummary, titles.showProfessionalSummary, (val) {
+            titles.professionalSummary = val;
+            provider.updateSectionTitles(titles);
+          }, () {
+            titles.showProfessionalSummary = !titles.showProfessionalSummary;
+            provider.updateSectionTitles(titles);
+          }),
+          childrenPadding: const EdgeInsets.all(16),
+          children: [
+            TextFormField(
+              controller: _summaryCtrl,
+              decoration: const InputDecoration(labelText: 'Summary'),
+              maxLines: 6,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildCustomSection(String id) {
+    return Consumer<CVProvider>(
+      key: ValueKey(id),
+      builder: (context, provider, _) {
+        final customSections = provider.cvData.customSections;
+        final sectionIndex = customSections.indexWhere((s) => s.id == id);
+        if (sectionIndex == -1) return const SizedBox.shrink();
+        
+        final section = customSections[sectionIndex];
+        
+        // --- Manage Quill Controller ---
+        if (!_customControllers.containsKey(id)) {
+          fq.QuillController quillController;
+          try {
+            if (section.description.isEmpty) {
+              quillController = fq.QuillController.basic();
+            } else {
+              // Try to load as JSON (Quill Delta)
+              final doc = fq.Document.fromJson(jsonDecode(section.description));
+              quillController = fq.QuillController(
+                document: doc,
+                selection: const TextSelection.collapsed(offset: 0),
+              );
+            }
+          } catch (e) {
+            // Fallback for plain text
+            quillController = fq.QuillController.basic();
+            if (section.description.isNotEmpty) {
+              quillController.document.insert(0, section.description);
+            }
+          }
+
+          // Add listener to save changes to provider
+          quillController.addListener(() {
+            final json = jsonEncode(quillController.document.toDelta().toJson());
+            // Only update if changes actually happen to avoid infinite loops or heavy notifying
+            if (section.description != json) {
+              section.description = json;
+              provider.updateCustomSection(id, section);
+            }
+          });
+          
+          _customControllers[id] = _CustomSectionControllers(
+            quillController: quillController,
+            scrollController: ScrollController(),
+            focusNode: FocusNode(),
+          );
+        }
+
+        final controllers = _customControllers[id]!;
+        final controller = controllers.quillController;
+
+        return ExpansionTile(
+          leading: const Icon(Icons.dashboard_customize),
+          title: _buildSectionHeader(context, section.title, section.isVisible, (val) {
+            section.title = val;
+            provider.updateSectionTitles(provider.cvData.sectionTitles); // Trigger update
+            provider.updateCustomSection(id, section);
+          }, () {
+            section.isVisible = !section.isVisible;
+            provider.updateCustomSection(id, section);
+          }),
+          childrenPadding: const EdgeInsets.all(16),
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton.icon(
+                  onPressed: () {
+                    // Dispose controller when removing section
+                    _customControllers.remove(id)?.dispose();
+                    provider.removeCustomSection(id);
+                  },
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  label: const Text('Delete Section', style: TextStyle(color: Colors.red)),
+                ),
+              ],
+            ),
+            // --- Rich Text Editor UI ---
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Description',
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.blueGrey,
+                        fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.grey.shade50,
+                  ),
+                  child: Column(
+                    children: [
+                      // Editor Area
+                      Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: SizedBox(
+                          height: 250,
+                          child: fq.QuillEditor(
+                            controller: controller,
+                            scrollController: controllers.scrollController,
+                            focusNode: controllers.focusNode,
+                            config: const fq.QuillEditorConfig(
+                              placeholder: 'Describe this section...',
+                              expands: true,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const Divider(height: 1),
+                      // Toolbar at the bottom with specific options as requested
+                      fq.QuillSimpleToolbar(
+                        controller: controller,
+                        config: const fq.QuillSimpleToolbarConfig(
+
+                          // Hide the buttons
+                          showInlineCode: false,
+                          showCodeBlock: false,    // Hides <>
+                          showSubscript: false,    // Hides X₂
+                          showSuperscript: false,  // Hides X²
+                          showClearFormat: false,   // Hides the T with the slash
+                          showSearchButton: false,
+                          showFontFamily: false,
+                          showFontSize: false,
+                          showBoldButton: true,
+                          showItalicButton: true,
+                          showUnderLineButton: true,
+                          showStrikeThrough: false,
+                          showColorButton: false,
+                          showBackgroundColorButton: false,
+                          showAlignmentButtons: true,
+                          showLeftAlignment: true,
+                          showCenterAlignment: true,
+                          showRightAlignment: true,
+                          showJustifyAlignment: true,
+                          showListNumbers: true,
+                          showListBullets: true,
+                          showListCheck: false,
+                          showQuote: false,
+                          showIndent: false,
+                          showLink: false,
+                          showUndo: true,
+                          showRedo: true,
+                          multiRowsDisplay: false,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-          );
-        }),
-        TextButton.icon(
-          onPressed: () => _addFieldController(),
-          icon: const Icon(Icons.add),
-          label: const Text('Add Custom Field'),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 
-  Widget _buildProfessionalSummarySection() {
-    return ExpansionTile(
-      leading: const Icon(Icons.description),
-      title: const Text('Professional Summary'),
-      childrenPadding: const EdgeInsets.all(16),
-      children: [
-        TextFormField(
-          controller: _summaryCtrl,
-          decoration: const InputDecoration(labelText: 'Summary'),
-          maxLines: 6,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildExperienceSection() {
-    return ExpansionTile(
-      leading: const Icon(Icons.work),
-      title: const Text('Experience'),
-      childrenPadding: const EdgeInsets.all(16),
-      children: [
-        Consumer<CVProvider>(
-          builder: (context, provider, _) {
-            final list = provider.cvData.experience;
-            return Column(
+  Widget _buildExperienceSection({Key? key}) {
+    return Consumer<CVProvider>(
+      key: key,
+      builder: (context, provider, _) {
+        final titles = provider.cvData.sectionTitles;
+        final list = provider.cvData.experience;
+        return ExpansionTile(
+          leading: const Icon(Icons.work),
+          title: _buildSectionHeader(context, titles.experience, titles.showExperience, (val) {
+            titles.experience = val;
+            provider.updateSectionTitles(titles);
+          }, () {
+            titles.showExperience = !titles.showExperience;
+            provider.updateSectionTitles(titles);
+          }),
+          childrenPadding: const EdgeInsets.all(16),
+          children: [
+            Column(
               children: [
                 ...list.asMap().entries.map((entry) {
                   final index = entry.key;
                   final exp = entry.value;
                   return Card(
-                    child: ListTile(
-                      title: Text(exp.position),
-                      subtitle: Text(exp.company),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => provider.removeExperience(index),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Experience', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                visualDensity: VisualDensity.compact,
+                                onPressed: () => provider.removeExperience(index),
+                              ),
+                            ],
+                          ),
+                          TextFormField(
+                            initialValue: exp.position,
+                            decoration: const InputDecoration(labelText: 'Job Title', isDense: true),
+                            onChanged: (val) {
+                              exp.position = val;
+                              provider.updateExperience(index, exp);
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            initialValue: exp.company,
+                            decoration: const InputDecoration(labelText: 'Company', isDense: true),
+                            onChanged: (val) {
+                              exp.company = val;
+                              provider.updateExperience(index, exp);
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  initialValue: exp.startDate,
+                                  decoration: const InputDecoration(labelText: 'Start', isDense: true),
+                                  onChanged: (val) {
+                                    exp.startDate = val;
+                                    provider.updateExperience(index, exp);
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: TextFormField(
+                                  initialValue: exp.endDate,
+                                  decoration: const InputDecoration(labelText: 'End', isDense: true),
+                                  onChanged: (val) {
+                                    exp.endDate = val;
+                                    provider.updateExperience(index, exp);
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            initialValue: exp.description,
+                            decoration: const InputDecoration(labelText: 'Description', isDense: true),
+                            maxLines: 2,
+                            onChanged: (val) {
+                              exp.description = val;
+                              provider.updateExperience(index, exp);
+                            },
+                          ),
+                        ],
                       ),
                     ),
                   );
                 }),
                 const SizedBox(height: 8),
                 TextButton.icon(
-                  onPressed: () => _showAddExperienceDialog(context),
+                  onPressed: () => provider.addExperience(Experience()),
                   icon: const Icon(Icons.add),
                   label: const Text('Add Experience'),
                 ),
               ],
-            );
-          },
-        ),
-      ],
+            ),
+          ],
+        );
+      },
     );
   }
 
-  Widget _buildEducationSection() {
-    return ExpansionTile(
-      leading: const Icon(Icons.school),
-      title: const Text('Education'),
-      childrenPadding: const EdgeInsets.all(16),
-      children: [
-        Consumer<CVProvider>(
-          builder: (context, provider, _) {
-            final list = provider.cvData.education;
-            return Column(
+  Widget _buildInternshipSection({Key? key}) {
+    return Consumer<CVProvider>(
+      key: key,
+      builder: (context, provider, _) {
+        final titles = provider.cvData.sectionTitles;
+        final list = provider.cvData.internships;
+        return ExpansionTile(
+          leading: const Icon(Icons.history_edu),
+          title: _buildSectionHeader(context, titles.internships, titles.showInternships, (val) {
+            titles.internships = val;
+            provider.updateSectionTitles(titles);
+          }, () {
+            titles.showInternships = !titles.showInternships;
+            provider.updateSectionTitles(titles);
+          }),
+          childrenPadding: const EdgeInsets.all(16),
+          children: [
+            Column(
               children: [
                 ...list.asMap().entries.map((entry) {
                   final index = entry.key;
-                  final ed = entry.value;
+                  final internship = entry.value;
                   return Card(
-                    child: ListTile(
-                      title: Text(ed.institution),
-                      subtitle: Text(ed.degree),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => provider.removeEducation(index),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Internship', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                visualDensity: VisualDensity.compact,
+                                onPressed: () => provider.removeInternship(index),
+                              ),
+                            ],
+                          ),
+                          TextFormField(
+                            initialValue: internship.position,
+                            decoration: const InputDecoration(labelText: 'Internship Role', isDense: true),
+                            onChanged: (val) {
+                              internship.position = val;
+                              provider.updateInternship(index, internship);
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            initialValue: internship.company,
+                            decoration: const InputDecoration(labelText: 'Company', isDense: true),
+                            onChanged: (val) {
+                              internship.company = val;
+                              provider.updateInternship(index, internship);
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  initialValue: internship.startDate,
+                                  decoration: const InputDecoration(labelText: 'Start Date', isDense: true),
+                                  onChanged: (val) {
+                                    internship.startDate = val;
+                                    provider.updateInternship(index, internship);
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: TextFormField(
+                                  initialValue: internship.endDate,
+                                  decoration: const InputDecoration(labelText: 'End Date', isDense: true),
+                                  onChanged: (val) {
+                                    internship.endDate = val;
+                                    provider.updateInternship(index, internship);
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            initialValue: internship.description,
+                            decoration: const InputDecoration(labelText: 'Description', isDense: true),
+                            maxLines: 2,
+                            onChanged: (val) {
+                              internship.description = val;
+                              provider.updateInternship(index, internship);
+                            },
+                          ),
+                        ],
                       ),
                     ),
                   );
                 }),
                 const SizedBox(height: 8),
                 TextButton.icon(
-                  onPressed: () => _showAddEducationDialog(context),
+                  onPressed: () => provider.addInternship(Internship()),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Internship'),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildReferencesSection({Key? key}) {
+    return Consumer<CVProvider>(
+      key: key,
+      builder: (context, provider, _) {
+        final titles = provider.cvData.sectionTitles;
+        final list = provider.cvData.references;
+        return ExpansionTile(
+          leading: const Icon(Icons.people),
+          title: _buildSectionHeader(context, titles.references, titles.showReferences, (val) {
+            titles.references = val;
+            provider.updateSectionTitles(titles);
+          }, () {
+            titles.showReferences = !titles.showReferences;
+            provider.updateSectionTitles(titles);
+          }),
+          childrenPadding: const EdgeInsets.all(16),
+          children: [
+            Column(
+              children: [
+                ...list.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final reference = entry.value;
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Reference', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                visualDensity: VisualDensity.compact,
+                                onPressed: () => provider.removeReference(index),
+                              ),
+                            ],
+                          ),
+                          TextFormField(
+                            initialValue: reference.name,
+                            decoration: const InputDecoration(labelText: 'Name', isDense: true),
+                            onChanged: (val) {
+                              reference.name = val;
+                              provider.updateReference(index, reference);
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            initialValue: reference.position,
+                            decoration: const InputDecoration(labelText: 'Position', isDense: true),
+                            onChanged: (val) {
+                              reference.position = val;
+                              provider.updateReference(index, reference);
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            initialValue: reference.company,
+                            decoration: const InputDecoration(labelText: 'Company/Organization', isDense: true),
+                            onChanged: (val) {
+                              reference.company = val;
+                              provider.updateReference(index, reference);
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  initialValue: reference.email,
+                                  decoration: const InputDecoration(labelText: 'Email', isDense: true),
+                                  keyboardType: TextInputType.emailAddress,
+                                  onChanged: (val) {
+                                    reference.email = val;
+                                    provider.updateReference(index, reference);
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: TextFormField(
+                                  initialValue: reference.phone,
+                                  decoration: const InputDecoration(labelText: 'Phone', isDense: true),
+                                  keyboardType: TextInputType.phone,
+                                  onChanged: (val) {
+                                    reference.phone = val;
+                                    provider.updateReference(index, reference);
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  onPressed: () => provider.addReference(Reference()),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Reference'),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildEducationSection({Key? key}) {
+    return Consumer<CVProvider>(
+      key: key,
+      builder: (context, provider, _) {
+        final titles = provider.cvData.sectionTitles;
+        final list = provider.cvData.education;
+        return ExpansionTile(
+          leading: const Icon(Icons.school),
+          title: _buildSectionHeader(context, titles.education, titles.showEducation, (val) {
+            titles.education = val;
+            provider.updateSectionTitles(titles);
+          }, () {
+            titles.showEducation = !titles.showEducation;
+            provider.updateSectionTitles(titles);
+          }),
+          childrenPadding: const EdgeInsets.all(16),
+          children: [
+            Column(
+               children: [
+                ...list.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final ed = entry.value;
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Education', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                visualDensity: VisualDensity.compact,
+                                onPressed: () => provider.removeEducation(index),
+                              ),
+                            ],
+                          ),
+                          TextFormField(
+                            initialValue: ed.institution,
+                            decoration: const InputDecoration(labelText: 'Institution', isDense: true),
+                            onChanged: (val) {
+                              ed.institution = val;
+                              provider.updateEducation(index, ed);
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            initialValue: ed.degree,
+                            decoration: const InputDecoration(labelText: 'Degree', isDense: true),
+                            onChanged: (val) {
+                              ed.degree = val;
+                              provider.updateEducation(index, ed);
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  initialValue: ed.startDate,
+                                  decoration: const InputDecoration(labelText: 'Start Date', isDense: true),
+                                  onChanged: (val) {
+                                    ed.startDate = val;
+                                    provider.updateEducation(index, ed);
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: TextFormField(
+                                  initialValue: ed.endDate,
+                                  decoration: const InputDecoration(labelText: 'End Date', isDense: true),
+                                  onChanged: (val) {
+                                    ed.endDate = val;
+                                    provider.updateEducation(index, ed);
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            initialValue: ed.description,
+                            decoration: const InputDecoration(labelText: 'Description', isDense: true),
+                            maxLines: 2,
+                            onChanged: (val) {
+                              ed.description = val;
+                              provider.updateEducation(index, ed);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  onPressed: () => provider.addEducation(Education()),
                   icon: const Icon(Icons.add),
                   label: const Text('Add Education'),
                 ),
               ],
-            );
-          },
-        ),
-      ],
+            ),
+          ],
+        );
+      },
     );
   }
 
-  Widget _buildSkillsSection() {
-    return ExpansionTile(
-      leading: const Icon(Icons.star),
-      title: const Text('Skills'),
-      childrenPadding: const EdgeInsets.all(16),
-      children: [
-        Consumer<CVProvider>(
-          builder: (context, provider, _) {
-            final list = provider.cvData.skills;
-            return Column(
+  Widget _buildSkillsSection({Key? key}) {
+    return Consumer<CVProvider>(
+      key: key,
+      builder: (context, provider, _) {
+        final titles = provider.cvData.sectionTitles;
+        final list = provider.cvData.skills;
+        return ExpansionTile(
+          leading: const Icon(Icons.star),
+          title: _buildSectionHeader(context, titles.skills, titles.showSkills, (val) {
+            titles.skills = val;
+            provider.updateSectionTitles(titles);
+          }, () {
+            titles.showSkills = !titles.showSkills;
+            provider.updateSectionTitles(titles);
+          }),
+          childrenPadding: const EdgeInsets.all(16),
+          children: [
+            Column(
               children: [
-                Wrap(
-                  spacing: 8,
-                  children: list.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final skill = entry.value;
-                    return Chip(
-                      label: Text(skill.name),
-                      onDeleted: () => provider.removeSkill(index),
-                    );
-                  }).toList(),
-                ),
+                ...list.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final skill = entry.value;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            initialValue: skill.name,
+                            decoration: const InputDecoration(labelText: 'Skill', isDense: true),
+                            onChanged: (val) {
+                              skill.name = val;
+                              provider.updateSkill(index, skill);
+                            },
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          visualDensity: VisualDensity.compact,
+                          onPressed: () => provider.removeSkill(index),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
                 const SizedBox(height: 8),
                 TextButton.icon(
-                  onPressed: () => _showAddSkillDialog(context),
+                  onPressed: () => provider.addSkill(Skill()),
                   icon: const Icon(Icons.add),
                   label: const Text('Add Skill'),
                 ),
               ],
-            );
-          },
-        ),
-      ],
+            ),
+          ],
+        );
+      },
     );
   }
 
   Widget _buildLivePreview() {
     return Consumer<CVProvider>(
       builder: (context, provider, _) {
-        return PdfPreview(
-          build: (format) => PDFService.generateCV(provider.cvData),
-          allowSharing: true,
-          allowPrinting: true,
-          canChangeOrientation: false,
-          canChangePageFormat: false,
-          canDebug: false,
-        );
+        return DebouncedPdfPreview(data: provider.cvData);
       },
     );
   }
@@ -411,132 +1150,77 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
     );
   }
 
-  void _showAddExperienceDialog(BuildContext context) {
-    final formKey = GlobalKey<FormState>();
-    final companyCtrl = TextEditingController();
-    final positionCtrl = TextEditingController();
-    final startDateCtrl = TextEditingController();
-    final endDateCtrl = TextEditingController();
-    final descriptionCtrl = TextEditingController();
+}
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Experience'),
-        content: SingleChildScrollView(
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(controller: positionCtrl, decoration: const InputDecoration(labelText: 'Job Title')),
-                TextFormField(controller: companyCtrl, decoration: const InputDecoration(labelText: 'Company')),
-                Row(
-                  children: [
-                    Expanded(child: TextFormField(controller: startDateCtrl, decoration: const InputDecoration(labelText: 'Start'))),
-                    const SizedBox(width: 8),
-                    Expanded(child: TextFormField(controller: endDateCtrl, decoration: const InputDecoration(labelText: 'End'))),
-                  ],
-                ),
-                TextFormField(controller: descriptionCtrl, decoration: const InputDecoration(labelText: 'Description'), maxLines: 2),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () {
-              if (formKey.currentState!.validate()) {
-                context.read<CVProvider>().addExperience(Experience(
-                  company: companyCtrl.text,
-                  position: positionCtrl.text,
-                  startDate: startDateCtrl.text,
-                  endDate: endDateCtrl.text,
-                  description: descriptionCtrl.text,
-                ));
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
+class DebouncedPdfPreview extends StatefulWidget {
+  final CVData data;
+  const DebouncedPdfPreview({super.key, required this.data});
+
+  @override
+  State<DebouncedPdfPreview> createState() => _DebouncedPdfPreviewState();
+}
+
+class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
+  Timer? _debounceTimer;
+  late bool _shouldBuild;
+
+  @override
+  void initState() {
+    super.initState();
+    // Start the timer on initialization to ensure the first build is debounced if many updates happen at startup
+    // or just let it build immediately.
+    _shouldBuild = true;
   }
 
-  void _showAddEducationDialog(BuildContext context) {
-    final formKey = GlobalKey<FormState>();
-    final institutionCtrl = TextEditingController();
-    final degreeCtrl = TextEditingController();
-    final startDateCtrl = TextEditingController();
-    final endDateCtrl = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Education'),
-        content: SingleChildScrollView(
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(controller: institutionCtrl, decoration: const InputDecoration(labelText: 'Institution')),
-                TextFormField(controller: degreeCtrl, decoration: const InputDecoration(labelText: 'Degree')),
-                Row(
-                  children: [
-                    Expanded(child: TextFormField(controller: startDateCtrl, decoration: const InputDecoration(labelText: 'Start'))),
-                    const SizedBox(width: 8),
-                    Expanded(child: TextFormField(controller: endDateCtrl, decoration: const InputDecoration(labelText: 'End'))),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () {
-              if (formKey.currentState!.validate()) {
-                context.read<CVProvider>().addEducation(Education(
-                  institution: institutionCtrl.text,
-                  degree: degreeCtrl.text,
-                  startDate: startDateCtrl.text,
-                  endDate: endDateCtrl.text,
-                  description: '',
-                ));
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
+  @override
+  void didUpdateWidget(DebouncedPdfPreview oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // When the data changes, we wait 800ms before allowing a re-build of the PDF.
+    // This stops the "nonstop loading" while the user is actively typing.
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 800), () {
+      if (mounted) {
+        setState(() {
+          _shouldBuild = true;
+        });
+      }
+    });
   }
 
-  void _showAddSkillDialog(BuildContext context) {
-    final nameCtrl = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Skill'),
-        content: TextFormField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Skill Name'), autofocus: true),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () {
-              if (nameCtrl.text.isNotEmpty) {
-                context.read<CVProvider>().addSkill(Skill(name: nameCtrl.text));
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // If we're debouncing, we show a loading indicator but keep the layout stable.
+    if (!_shouldBuild) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Updating preview...'),
+          ],
+        ),
+      );
+    }
+
+    // This build method will be called again when _shouldBuild becomes true.
+    // We set it to false immediately after starting a build so that the next widget update 
+    // will trigger the debounce timer again.
+    _shouldBuild = false; 
+
+    return PdfPreview(
+      build: (format) => PDFService.generateCV(widget.data),
+      allowSharing: true,
+      allowPrinting: true,
+      canChangeOrientation: false,
+      canChangePageFormat: false,
+      canDebug: false,
     );
   }
 }
