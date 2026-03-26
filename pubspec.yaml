@@ -40,6 +40,7 @@ dependencies:
   pdf: ^3.10.10
   printing: ^5.11.1
   flutter_quill: ^11.5.0
+  google_fonts: ^8.0.2
 
 dev_dependencies:
   flutter_test:

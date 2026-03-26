@@ -5,6 +5,7 @@ import 'package:flutter_quill/flutter_quill.dart';
 
 import 'core/theme/app_theme.dart';
 import 'providers/cv_provider.dart';
+import 'providers/theme_provider.dart';
 import 'ui/screens/home_screen.dart';
 
 void main() {
@@ -13,6 +14,7 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => CVProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: const MyApp(),
     ),
@@ -24,9 +26,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return MaterialApp(
       title: 'CV Maker',
       theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeProvider.themeMode,
       home: const HomeScreen(),
       debugShowCheckedModeBanner: false,
       localizationsDelegates: const [

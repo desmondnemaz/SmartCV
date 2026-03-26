@@ -105,6 +105,22 @@ class Skill {
   });
 }
 
+class Certification {
+  String title;
+  String issuer;
+  String date;
+  String description;
+  bool isCompleted;
+
+  Certification({
+    this.title = '',
+    this.issuer = '',
+    this.date = '',
+    this.description = '',
+    this.isCompleted = true,
+  });
+}
+
 class CustomSection {
   String id;
   String title;
@@ -132,6 +148,8 @@ class SectionTitles {
   bool showEducation;
   String skills;
   bool showSkills;
+  String certifications;
+  bool showCertifications;
   String references;
   bool showReferences;
 
@@ -148,6 +166,8 @@ class SectionTitles {
     this.showEducation = true,
     this.skills = 'Skills',
     this.showSkills = true,
+    this.certifications = 'Certifications',
+    this.showCertifications = true,
     this.references = 'References',
     this.showReferences = true,
   });
@@ -161,6 +181,7 @@ class CVData {
   List<Internship> internships;
   List<Reference> references;
   List<Skill> skills;
+  List<Certification> certifications;
   List<CustomSection> customSections;
   List<String> sectionOrder;
 
@@ -172,6 +193,7 @@ class CVData {
     List<Internship>? internships,
     List<Reference>? references,
     List<Skill>? skills,
+    List<Certification>? certifications,
     List<CustomSection>? customSections,
     List<String>? sectionOrder,
   })  : personalInfo = personalInfo ?? PersonalInfo(),
@@ -181,6 +203,7 @@ class CVData {
         internships = internships ?? [],
         references = references ?? [],
         skills = skills ?? [],
+        certifications = certifications ?? [],
         customSections = customSections ?? [],
         sectionOrder = sectionOrder ?? [
           'personalInfo',
@@ -189,6 +212,7 @@ class CVData {
           'internships',
           'education',
           'skills',
+          'certifications',
           'references'
         ];
 }

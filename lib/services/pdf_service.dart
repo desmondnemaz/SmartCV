@@ -101,6 +101,13 @@ class PDFService {
                   content.add(pw.SizedBox(height: CVTheme.sectionSpacing));
                 }
                 break;
+              case 'certifications':
+                if (data.sectionTitles.showCertifications && data.certifications.isNotEmpty) {
+                  content.add(_buildSectionTitle(data.sectionTitles.certifications));
+                  content.addAll(data.certifications.map((c) => _buildCertificationItem(c)));
+                  content.add(pw.SizedBox(height: CVTheme.sectionSpacing));
+                }
+                break;
               case 'references':
                 if (data.sectionTitles.showReferences && data.references.isNotEmpty) {
                   content.add(_buildSectionTitle(data.sectionTitles.references));
@@ -359,6 +366,62 @@ class PDFService {
             (s) => pw.Text('• $s', style: const pw.TextStyle(fontSize: CVTheme.bodyFontSize)),
           )
           .toList(),
+    );
+  }
+
+  static pw.Widget _buildCertificationItem(Certification cert) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: CVTheme.itemSpacing),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Expanded(
+                child: pw.RichText(
+                  text: pw.TextSpan(
+                    children: [
+                      pw.TextSpan(
+                        text: cert.title,
+                        style: pw.TextStyle(
+                          fontWeight: pw.FontWeight.bold, 
+                          fontSize: CVTheme.itemTitleSize,
+                        ),
+                      ),
+                      if (!cert.isCompleted)
+                        pw.TextSpan(
+                          text: ' (In Progress)',
+                          style: pw.TextStyle(
+                            fontStyle: pw.FontStyle.italic,
+                            color: PdfColors.orange800,
+                            fontSize: 10,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              pw.Text(
+                cert.date,
+                style: const pw.TextStyle(color: CVTheme.lightTextColor, fontSize: 10),
+              ),
+            ],
+          ),
+          pw.Text(
+            cert.issuer,
+            style: pw.TextStyle(
+              fontStyle: pw.FontStyle.italic,
+              color: CVTheme.secondaryColor,
+              fontSize: 11,
+            ),
+          ),
+          if (cert.description.isNotEmpty) ...[
+            pw.SizedBox(height: 4),
+            pw.Text(cert.description, style: const pw.TextStyle(fontSize: CVTheme.bodyFontSize)),
+          ]
+        ],
+      ),
     );
   }
 

@@ -127,6 +127,26 @@ class CVProvider with ChangeNotifier {
     }
   }
 
+  // --- Certifications ---
+  void addCertification(Certification cert) {
+    _cvData.certifications.add(cert);
+    notifyListeners();
+  }
+
+  void updateCertification(int index, Certification cert) {
+    if (index >= 0 && index < _cvData.certifications.length) {
+      _cvData.certifications[index] = cert;
+      notifyListeners();
+    }
+  }
+
+  void removeCertification(int index) {
+    if (index >= 0 && index < _cvData.certifications.length) {
+      _cvData.certifications.removeAt(index);
+      notifyListeners();
+    }
+  }
+
   // --- Custom Sections ---
   void addCustomSection(CustomSection section) {
     _cvData.customSections.add(section);

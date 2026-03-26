@@ -136,7 +136,7 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('CV Editor'),
+        title: const Text('SmartCV Editor'),
         actions: [
           if (!Responsive.isDesktop(context))
             IconButton(
@@ -233,6 +233,7 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
       case 'internships': return _buildInternshipSection();
       case 'education': return _buildEducationSection();
       case 'skills': return _buildSkillsSection();
+      case 'certifications': return _buildCertificationSection();
       case 'references': return _buildReferencesSection();
       default: return const SizedBox.shrink();
     }
@@ -1122,6 +1123,121 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
                   onPressed: () => provider.addSkill(Skill()),
                   icon: const Icon(Icons.add),
                   label: const Text('Add Skill'),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildCertificationSection({Key? key}) {
+    return Consumer<CVProvider>(
+      key: key,
+      builder: (context, provider, _) {
+        final titles = provider.cvData.sectionTitles;
+        final list = provider.cvData.certifications;
+        return ExpansionTile(
+          leading: const Icon(Icons.verified),
+          title: _buildSectionHeader(context, titles.certifications, titles.showCertifications, (val) {
+            titles.certifications = val;
+            provider.updateSectionTitles(titles);
+          }, () {
+            titles.showCertifications = !titles.showCertifications;
+            provider.updateSectionTitles(titles);
+          }),
+          childrenPadding: const EdgeInsets.all(16),
+          children: [
+            Column(
+              children: [
+                ...list.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final cert = entry.value;
+                  return Card(
+                    margin: const EdgeInsets.all(8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Certification', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                visualDensity: VisualDensity.compact,
+                                onPressed: () => provider.removeCertification(index),
+                              ),
+                            ],
+                          ),
+                          TextFormField(
+                            initialValue: cert.title,
+                            decoration: const InputDecoration(labelText: 'Certification Title', isDense: true),
+                            onChanged: (val) {
+                              cert.title = val;
+                              provider.updateCertification(index, cert);
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            initialValue: cert.issuer,
+                            decoration: const InputDecoration(labelText: 'Issuing Organization', isDense: true),
+                            onChanged: (val) {
+                              cert.issuer = val;
+                              provider.updateCertification(index, cert);
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  initialValue: cert.date,
+                                  decoration: const InputDecoration(labelText: 'Date (Year or MM/YYYY)', isDense: true),
+                                  onChanged: (val) {
+                                    cert.date = val;
+                                    provider.updateCertification(index, cert);
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 24),
+                              Column(
+                                children: [
+                                  const Text('Status', style: TextStyle(fontSize: 10, color: Colors.blueGrey)),
+                                  Switch(
+                                    value: cert.isCompleted,
+                                    onChanged: (val) {
+                                      cert.isCompleted = val;
+                                      provider.updateCertification(index, cert);
+                                    },
+                                  ),
+                                  Text(cert.isCompleted ? 'Completed' : 'In Progress', style: const TextStyle(fontSize: 10)),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            initialValue: cert.description,
+                            decoration: const InputDecoration(labelText: 'Description (Optional)', isDense: true),
+                            maxLines: 2,
+                            onChanged: (val) {
+                              cert.description = val;
+                              provider.updateCertification(index, cert);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  onPressed: () => provider.addCertification(Certification()),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Certification'),
                 ),
               ],
             ),
