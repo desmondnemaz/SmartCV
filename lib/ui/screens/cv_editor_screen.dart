@@ -52,9 +52,12 @@ class _CustomSectionControllers {
 }
 
 class _CVEditorScreenState extends State<CVEditorScreen> {
-  late TextEditingController _summaryCtrl;
   late TextEditingController _jobTitleCtrl;
+  late fq.QuillController _summaryQuillCtrl;
+  final ScrollController _summaryScrollCtrl = ScrollController();
+  final FocusNode _summaryFocusNode = FocusNode();
   String _headerAlignment = 'left';
+  bool _showNameAsHeader = false;
   final List<_FieldControllerPair> _fieldControllers = [];
   // Map to store Quill-related controllers for custom sections to persist state and dispose properly
   final Map<String, _CustomSectionControllers> _customControllers = {};
@@ -63,12 +66,29 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
   void initState() {
     super.initState();
     final info = context.read<CVProvider>().cvData.personalInfo;
-    _summaryCtrl = TextEditingController(text: info.profileSummary);
-    _summaryCtrl.addListener(_updatePersonalInfo);
+    
+    // Initialize Summary Quill Controller
+    try {
+      if (info.profileSummary.isEmpty) {
+        _summaryQuillCtrl = fq.QuillController.basic();
+      } else {
+        _summaryQuillCtrl = fq.QuillController(
+          document: fq.Document.fromJson(jsonDecode(info.profileSummary)),
+          selection: const TextSelection.collapsed(offset: 0),
+        );
+      }
+    } catch (e) {
+      _summaryQuillCtrl = fq.QuillController.basic();
+      if (info.profileSummary.isNotEmpty) {
+        _summaryQuillCtrl.document.insert(0, info.profileSummary);
+      }
+    }
+    _summaryQuillCtrl.addListener(_updatePersonalInfo);
     
     _jobTitleCtrl = TextEditingController(text: info.jobTitle);
     _jobTitleCtrl.addListener(_updatePersonalInfo);
     _headerAlignment = info.headerAlignment;
+    _showNameAsHeader = info.showNameAsHeader;
 
     for (var field in info.fields) {
       _addFieldController(field.title, field.value, field.isCompulsory);
@@ -89,7 +109,8 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
       jobTitle: _jobTitleCtrl.text,
       headerAlignment: _headerAlignment,
       fields: fields,
-      profileSummary: _summaryCtrl.text,
+      profileSummary: jsonEncode(_summaryQuillCtrl.document.toDelta().toJson()),
+      showNameAsHeader: _showNameAsHeader,
     ));
   }
 
@@ -121,7 +142,9 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
 
   @override
   void dispose() {
-    _summaryCtrl.dispose();
+    _summaryQuillCtrl.dispose();
+    _summaryScrollCtrl.dispose();
+    _summaryFocusNode.dispose();
     _jobTitleCtrl.dispose();
     for (var pair in _fieldControllers) {
       pair.dispose();
@@ -277,6 +300,22 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
             Icon(Icons.format_align_center, size: 20),
             Icon(Icons.format_align_right, size: 20),
           ],
+        ),
+        const SizedBox(height: 16),
+        CheckboxListTile(
+          title: const Text('Use Full Name as Header Title', style: TextStyle(fontSize: 14)),
+          subtitle: const Text('Replaces "CURRICULUM VITAE" with your name', style: TextStyle(fontSize: 12)),
+          value: _showNameAsHeader,
+          onChanged: (val) {
+            setState(() {
+              _showNameAsHeader = val ?? false;
+            });
+            _updatePersonalInfo();
+          },
+          contentPadding: EdgeInsets.zero,
+          dense: true,
+          activeColor: Theme.of(context).primaryColor,
+          controlAffinity: ListTileControlAffinity.leading,
         ),
       ],
     );
@@ -453,10 +492,78 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
           }),
           childrenPadding: const EdgeInsets.all(16),
           children: [
-            TextFormField(
-              controller: _summaryCtrl,
-              decoration: const InputDecoration(labelText: 'Summary'),
-              maxLines: 6,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Summary',
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.blueGrey,
+                        fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.grey.shade50,
+                  ),
+                  child: Column(
+                    children: [
+                      // Toolbar at the top for better accessibility in a smaller section
+                      fq.QuillSimpleToolbar(
+                        controller: _summaryQuillCtrl,
+                        config: const fq.QuillSimpleToolbarConfig(
+                          showInlineCode: false,
+                          showCodeBlock: false,
+                          showSubscript: false,
+                          showSuperscript: false,
+                          showClearFormat: false,
+                          showSearchButton: false,
+                          showFontFamily: false,
+                          showFontSize: false,
+                          showBoldButton: true,
+                          showItalicButton: true,
+                          showUnderLineButton: false,
+                          showStrikeThrough: false,
+                          showColorButton: false,
+                          showBackgroundColorButton: false,
+                          showAlignmentButtons: true,
+                          showLeftAlignment: false,
+                          showCenterAlignment: false,
+                          showRightAlignment: false,
+                          showJustifyAlignment: true,
+                          showListNumbers: false,
+                          showListBullets: false,
+                          showListCheck: false,
+                          showQuote: false,
+                          showIndent: false,
+                          showLink: false,
+                          showUndo: true,
+                          showRedo: true,
+                          multiRowsDisplay: false,
+                        ),
+                      ),
+                      const Divider(height: 1),
+                      // Editor Area
+                      Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: SizedBox(
+                          height: 150,
+                          child: fq.QuillEditor(
+                            controller: _summaryQuillCtrl,
+                            scrollController: _summaryScrollCtrl,
+                            focusNode: _summaryFocusNode,
+                            config: const fq.QuillEditorConfig(
+                              placeholder: 'Write your professional summary...',
+                              expands: true,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ],
         );
@@ -1330,13 +1437,145 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
     // will trigger the debounce timer again.
     _shouldBuild = false; 
 
-    return PdfPreview(
-      build: (format) => PDFService.generateCV(widget.data),
-      allowSharing: true,
-      allowPrinting: true,
-      canChangeOrientation: false,
-      canChangePageFormat: false,
-      canDebug: false,
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          color: Colors.grey.shade50,
+          child: Row(
+            children: [
+              PopupMenuButton<double>(
+                icon: const Icon(Icons.format_line_spacing, size: 18, color: Colors.blueGrey),
+                tooltip: 'Line Height',
+                onSelected: (val) {
+                  context.read<CVProvider>().updateLineHeight(val);
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    enabled: false,
+                    child: Text('LINE HEIGHT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
+                  ),
+                  _buildLineHeightItem(1.0, '1', widget.data.lineHeight),
+                  _buildLineHeightItem(1.15, '1.15', widget.data.lineHeight),
+                  _buildLineHeightItem(1.25, '1.25', widget.data.lineHeight),
+                  _buildLineHeightItem(1.5, '1.5', widget.data.lineHeight),
+                  _buildLineHeightItem(2.0, '2', widget.data.lineHeight),
+                ],
+              ),
+              const VerticalDivider(width: 20, indent: 8, endIndent: 8),
+              const Icon(Icons.format_size, size: 18, color: Colors.blueGrey),
+              const SizedBox(width: 12),
+              const Text(
+                'Font Size',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blueGrey,
+                ),
+              ),
+              Expanded(
+                child: SliderTheme(
+                  data: SliderTheme.of(context).copyWith(
+                    trackHeight: 2,
+                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+                  ),
+                  child: Slider(
+                    value: widget.data.baseFontSize.clamp(10, 14),
+                    min: 10,
+                    max: 14,
+                    divisions: 4,
+                    label: widget.data.baseFontSize.round().toString(),
+                    onChanged: (val) {
+                      context.read<CVProvider>().updateBaseFontSize(val);
+                    },
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.blueGrey.shade100,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  widget.data.baseFontSize.round().toString(),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blueGrey,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.fullscreen, size: 20, color: Colors.blueGrey),
+                tooltip: 'Full Screen',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => FullScreenPreview(data: widget.data),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 1),
+        Expanded(
+          child: PdfPreview(
+            build: (format) => PDFService.generateCV(widget.data),
+            allowSharing: true,
+            allowPrinting: true,
+            canChangeOrientation: false,
+            canChangePageFormat: false,
+            canDebug: false,
+          ),
+        ),
+      ],
+    );
+  }
+
+  PopupMenuItem<double> _buildLineHeightItem(double value, String label, double current) {
+    return PopupMenuItem<double>(
+      value: value,
+      child: Row(
+        children: [
+          SizedBox(
+            width: 24,
+            child: current == value ? const Icon(Icons.check, size: 16) : null,
+          ),
+          Text(label),
+        ],
+      ),
+    );
+  }
+}
+
+class FullScreenPreview extends StatelessWidget {
+  final CVData data;
+
+  const FullScreenPreview({super.key, required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('CV Preview', style: TextStyle(fontSize: 16)),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.blueGrey.shade800,
+        elevation: 0.5,
+      ),
+      body: PdfPreview(
+        build: (format) => PDFService.generateCV(data),
+        allowSharing: true,
+        allowPrinting: true,
+        canChangeOrientation: false,
+        canChangePageFormat: false,
+        canDebug: false,
+      ),
     );
   }
 }

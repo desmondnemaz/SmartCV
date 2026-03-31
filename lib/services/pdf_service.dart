@@ -20,6 +20,19 @@ class PDFService {
     _fontBoldItalic ??= await PdfGoogleFonts.robotoBoldItalic();
   }
 
+  static Map<String, double> _calculateFontSizes(double x) {
+    return {
+      'body': x,
+      'sectionTitle': x + 6,
+      'headerTitle': x * 2.2,
+      'headerJobTitle': x + 4,
+      'itemTitle': x + 4,
+      'itemText': x + 1,
+      'fieldLabel': x - 1,
+      'fieldValue': x - 1,
+    };
+  }
+
   static Future<Uint8List> generateCV(CVData data) async {
     await _loadFonts();
 
@@ -37,9 +50,12 @@ class PDFService {
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(CVTheme.pageMargin),
         build: (pw.Context context) {
+          final sizes = _calculateFontSizes(data.baseFontSize);
+          final lh = data.lineHeight;
           final List<pw.Widget> content = [
-            _buildHeader(data.personalInfo),
-            pw.SizedBox(height: CVTheme.lineSpacing),
+            pw.SizedBox(height: 10), // Additional top safe area for mobile printing
+            _buildHeader(data.personalInfo, sizes, lh),
+            pw.SizedBox(height: CVTheme.lineSpacing * lh),
           ];
 
           for (final sectionKey in data.sectionOrder) {
@@ -48,10 +64,10 @@ class PDFService {
               if (customIndex != -1) {
                 final custom = data.customSections[customIndex];
                 if (custom.isVisible && custom.description.isNotEmpty) {
-                  content.add(_buildSectionTitle(custom.title));
+                  content.add(_buildSectionTitle(custom.title, sizes, lh));
                   // Render rich text (Quill Delta JSON) to PDF
-                  content.addAll(_buildRichText(custom.description, _fontRegular!, _fontBold!, _fontItalic!, _fontBoldItalic!));
-                  content.add(pw.SizedBox(height: CVTheme.sectionSpacing));
+                  content.addAll(_buildRichText(custom.description, _fontRegular!, _fontBold!, _fontItalic!, _fontBoldItalic!, sizes['body']!, lh));
+                  content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
               }
               continue;
@@ -60,59 +76,57 @@ class PDFService {
             switch (sectionKey) {
               case 'personalInfo':
                 if (data.sectionTitles.showPersonalInfo) {
-                  content.add(_buildContactInfo(data.personalInfo, data.sectionTitles.personalInfo));
-                  content.add(pw.SizedBox(height: CVTheme.sectionSpacing));
+                  content.add(_buildContactInfo(data.personalInfo, data.sectionTitles.personalInfo, sizes, lh));
+                  content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
                 break;
               case 'professionalSummary':
                 if (data.sectionTitles.showProfessionalSummary && data.personalInfo.profileSummary.isNotEmpty) {
-                  content.add(_buildSectionTitle(data.sectionTitles.professionalSummary));
-                  content.add(pw.Text(data.personalInfo.profileSummary, 
-                    style: const pw.TextStyle(fontSize: CVTheme.bodyFontSize),
-                    textAlign: pw.TextAlign.left));
-                  content.add(pw.SizedBox(height: CVTheme.sectionSpacing));
+                  content.add(_buildSectionTitle(data.sectionTitles.professionalSummary, sizes, lh));
+                  content.addAll(_buildRichText(data.personalInfo.profileSummary, _fontRegular!, _fontBold!, _fontItalic!, _fontBoldItalic!, sizes['body']!, lh));
+                  content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
                 break;
               case 'experience':
                 if (data.sectionTitles.showExperience && data.experience.isNotEmpty) {
-                  content.add(_buildSectionTitle(data.sectionTitles.experience));
-                  content.addAll(data.experience.map((e) => _buildExperienceItem(e)));
-                  content.add(pw.SizedBox(height: CVTheme.sectionSpacing));
+                  content.add(_buildSectionTitle(data.sectionTitles.experience, sizes, lh));
+                  content.addAll(data.experience.map((e) => _buildExperienceItem(e, sizes, lh)));
+                  content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
                 break;
               case 'internships':
                 if (data.sectionTitles.showInternships && data.internships.isNotEmpty) {
-                  content.add(_buildSectionTitle(data.sectionTitles.internships));
-                  content.addAll(data.internships.map((e) => _buildInternshipItem(e)));
-                  content.add(pw.SizedBox(height: CVTheme.sectionSpacing));
+                  content.add(_buildSectionTitle(data.sectionTitles.internships, sizes, lh));
+                  content.addAll(data.internships.map((e) => _buildInternshipItem(e, sizes, lh)));
+                  content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
                 break;
               case 'education':
                 if (data.sectionTitles.showEducation && data.education.isNotEmpty) {
-                  content.add(_buildSectionTitle(data.sectionTitles.education));
-                  content.addAll(data.education.map((e) => _buildEducationItem(e)));
-                  content.add(pw.SizedBox(height: CVTheme.sectionSpacing));
+                  content.add(_buildSectionTitle(data.sectionTitles.education, sizes, lh));
+                  content.addAll(data.education.map((e) => _buildEducationItem(e, sizes, lh)));
+                  content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
                 break;
               case 'skills':
                 if (data.sectionTitles.showSkills && data.skills.isNotEmpty) {
-                  content.add(_buildSectionTitle(data.sectionTitles.skills));
-                  content.add(_buildSkillsList(data.skills));
-                  content.add(pw.SizedBox(height: CVTheme.sectionSpacing));
+                  content.add(_buildSectionTitle(data.sectionTitles.skills, sizes, lh));
+                  content.add(_buildSkillsList(data.skills, sizes['body']!, lh));
+                  content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
                 break;
               case 'certifications':
                 if (data.sectionTitles.showCertifications && data.certifications.isNotEmpty) {
-                  content.add(_buildSectionTitle(data.sectionTitles.certifications));
-                  content.addAll(data.certifications.map((c) => _buildCertificationItem(c)));
-                  content.add(pw.SizedBox(height: CVTheme.sectionSpacing));
+                  content.add(_buildSectionTitle(data.sectionTitles.certifications, sizes, lh));
+                  content.addAll(data.certifications.map((c) => _buildCertificationItem(c, sizes, lh)));
+                  content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
                 break;
               case 'references':
                 if (data.sectionTitles.showReferences && data.references.isNotEmpty) {
-                  content.add(_buildSectionTitle(data.sectionTitles.references));
-                  content.addAll(data.references.map((r) => _buildReferenceItem(r)));
-                  content.add(pw.SizedBox(height: CVTheme.sectionSpacing));
+                  content.add(_buildSectionTitle(data.sectionTitles.references, sizes, lh));
+                  content.addAll(data.references.map((r) => _buildReferenceItem(r, sizes, lh)));
+                  content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
                 break;
             }
@@ -126,7 +140,7 @@ class PDFService {
     return pdf.save();
   }
 
-  static pw.Widget _buildHeader(PersonalInfo info) {
+  static pw.Widget _buildHeader(PersonalInfo info, Map<String, double> sizes, double lh) {
     if (info.fields.isEmpty && info.jobTitle.isEmpty) return pw.SizedBox();
 
     pw.CrossAxisAlignment titleAlign;
@@ -151,45 +165,50 @@ class PDFService {
             crossAxisAlignment: titleAlign,
             children: [
               pw.Text(
-                'CURRICULUM VITAE',
+                info.showNameAsHeader ? info.fullName.toUpperCase() : 'CURRICULUM VITAE',
                 style: pw.TextStyle(
-                  fontSize: CVTheme.headerTitleSize,
+                  fontSize: sizes['headerTitle'],
                   fontWeight: pw.FontWeight.bold,
                   color: CVTheme.primaryColor,
                   letterSpacing: 2,
+                  lineSpacing: sizes['headerTitle']! * (lh - 1.0),
                 ),
               ),
               if (info.jobTitle.isNotEmpty) ...[
-                pw.SizedBox(height: CVTheme.headerTitleBottomSpacing),
+                pw.SizedBox(height: CVTheme.headerTitleBottomSpacing * lh),
                 pw.Text(
                   info.jobTitle.toUpperCase(),
                   style: pw.TextStyle(
-                    fontSize: CVTheme.headerJobTitleSize,
+                    fontSize: sizes['headerJobTitle'],
                     fontWeight: pw.FontWeight.bold,
                     color: CVTheme.secondaryColor,
+                    lineSpacing: sizes['headerJobTitle']! * (lh - 1.0),
                   ),
                 ),
               ],
             ],
           ),
         ),
-        pw.SizedBox(height: CVTheme.headerAfterDividerSpacing),
+        pw.SizedBox(height: CVTheme.headerAfterDividerSpacing * lh),
         pw.Divider(color: CVTheme.primaryColor, thickness: CVTheme.headerDividerThickness),
       ],
     );
   }
 
-  static pw.Widget _buildContactInfo(PersonalInfo info, String title) {
-    final infoFields = info.fields.where((f) => f.value.isNotEmpty).toList();
+  static pw.Widget _buildContactInfo(PersonalInfo info, String title, Map<String, double> sizes, double lh) {
+    List<CVField> infoFields = info.fields.where((f) => f.value.isNotEmpty).toList();
+    if (info.showNameAsHeader) {
+      infoFields = infoFields.where((f) => f.title != 'Full Name').toList();
+    }
     if (infoFields.isEmpty) return pw.SizedBox();
 
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle(title),
+        _buildSectionTitle(title, sizes, lh),
         ...infoFields.map((field) {
           return pw.Padding(
-            padding: const pw.EdgeInsets.only(bottom: CVTheme.fieldPaddingBottom),
+            padding: pw.EdgeInsets.only(bottom: CVTheme.fieldPaddingBottom * lh),
             child: pw.Row(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
@@ -199,8 +218,9 @@ class PDFService {
                     field.title,
                     style: pw.TextStyle(
                       fontWeight: pw.FontWeight.bold, 
-                      fontSize: CVTheme.fieldLabelSize,
+                      fontSize: sizes['fieldLabel'],
                       color: CVTheme.textColor,
+                      lineSpacing: sizes['fieldLabel']! * (lh - 1.0),
                     ),
                   ),
                 ),
@@ -208,9 +228,10 @@ class PDFService {
                 pw.Expanded(
                   child: pw.Text(
                     field.value,
-                    style: const pw.TextStyle(
-                      fontSize: CVTheme.fieldValueSize,
+                    style: pw.TextStyle(
+                      fontSize: sizes['fieldValue'],
                       color: CVTheme.textColor,
+                      lineSpacing: sizes['fieldValue']! * (lh - 1.0),
                     ),
                   ),
                 ),
@@ -222,28 +243,29 @@ class PDFService {
     );
   }
 
-  static pw.Widget _buildSectionTitle(String title) {
+  static pw.Widget _buildSectionTitle(String title, Map<String, double> sizes, double lh) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Text(
           title.toUpperCase(),
           style: pw.TextStyle(
-            fontSize: CVTheme.sectionTitleSize,
+            fontSize: sizes['sectionTitle'],
             fontWeight: pw.FontWeight.bold,
             color: CVTheme.accentColor,
+            lineSpacing: sizes['sectionTitle']! * (lh - 1.0),
           ),
         ),
-        pw.SizedBox(height: 4),
+        pw.SizedBox(height: 2 * lh),
         pw.Divider(color: CVTheme.dividerColor, thickness: CVTheme.sectionDividerThickness),
-        pw.SizedBox(height: 8),
+        pw.SizedBox(height: 4 * lh),
       ],
     );
   }
 
-  static pw.Widget _buildExperienceItem(Experience exp) {
+  static pw.Widget _buildExperienceItem(Experience exp, Map<String, double> sizes, double lh) {
     return pw.Padding(
-      padding: const pw.EdgeInsets.only(bottom: CVTheme.itemSpacing),
+      padding: pw.EdgeInsets.only(bottom: CVTheme.itemSpacing * lh),
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
@@ -254,12 +276,17 @@ class PDFService {
                 exp.position,
                 style: pw.TextStyle(
                   fontWeight: pw.FontWeight.bold, 
-                  fontSize: CVTheme.itemTitleSize,
+                  fontSize: sizes['itemTitle'],
+                  lineSpacing: sizes['itemTitle']! * (lh - 1.0),
                 ),
               ),
               pw.Text(
                 '${exp.startDate} - ${exp.endDate}',
-                style: const pw.TextStyle(color: CVTheme.lightTextColor, fontSize: 10),
+                style: pw.TextStyle(
+                  color: CVTheme.lightTextColor, 
+                  fontSize: sizes['fieldLabel'],
+                  lineSpacing: sizes['fieldLabel']! * (lh - 1.0),
+                ),
               ),
             ],
           ),
@@ -268,19 +295,23 @@ class PDFService {
             style: pw.TextStyle(
               fontStyle: pw.FontStyle.italic,
               color: CVTheme.secondaryColor,
-              fontSize: 11,
+              fontSize: sizes['itemText'],
+              lineSpacing: sizes['itemText']! * (lh - 1.0),
             ),
           ),
-          pw.SizedBox(height: 4),
-          pw.Text(exp.description, style: const pw.TextStyle(fontSize: CVTheme.bodyFontSize)),
+          pw.SizedBox(height: 4 * lh),
+          pw.Text(exp.description, style: pw.TextStyle(
+            fontSize: sizes['body'],
+            lineSpacing: sizes['body']! * (lh - 1.0),
+          )),
         ],
       ),
     );
   }
 
-  static pw.Widget _buildInternshipItem(Internship internship) {
+  static pw.Widget _buildInternshipItem(Internship internship, Map<String, double> sizes, double lh) {
     return pw.Padding(
-      padding: const pw.EdgeInsets.only(bottom: CVTheme.itemSpacing),
+      padding: pw.EdgeInsets.only(bottom: CVTheme.itemSpacing * lh),
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
@@ -291,12 +322,17 @@ class PDFService {
                 internship.position,
                 style: pw.TextStyle(
                   fontWeight: pw.FontWeight.bold, 
-                  fontSize: CVTheme.itemTitleSize,
+                  fontSize: sizes['itemTitle'],
+                  lineSpacing: sizes['itemTitle']! * (lh - 1.0),
                 ),
               ),
               pw.Text(
                 '${internship.startDate} - ${internship.endDate}',
-                style: const pw.TextStyle(color: CVTheme.lightTextColor, fontSize: 10),
+                style: pw.TextStyle(
+                  color: CVTheme.lightTextColor, 
+                  fontSize: sizes['fieldLabel'],
+                  lineSpacing: sizes['fieldLabel']! * (lh - 1.0),
+                ),
               ),
             ],
           ),
@@ -305,19 +341,23 @@ class PDFService {
             style: pw.TextStyle(
               fontStyle: pw.FontStyle.italic,
               color: CVTheme.secondaryColor,
-              fontSize: 11,
+              fontSize: sizes['itemText'],
+              lineSpacing: sizes['itemText']! * (lh - 1.0),
             ),
           ),
-          pw.SizedBox(height: 4),
-          pw.Text(internship.description, style: const pw.TextStyle(fontSize: CVTheme.bodyFontSize)),
+          pw.SizedBox(height: 4 * lh),
+          pw.Text(internship.description, style: pw.TextStyle(
+            fontSize: sizes['body'],
+            lineSpacing: sizes['body']! * (lh - 1.0),
+          )),
         ],
       ),
     );
   }
 
-  static pw.Widget _buildEducationItem(Education ed) {
+  static pw.Widget _buildEducationItem(Education ed, Map<String, double> sizes, double lh) {
     return pw.Padding(
-      padding: const pw.EdgeInsets.only(bottom: CVTheme.itemSpacing),
+      padding: pw.EdgeInsets.only(bottom: CVTheme.itemSpacing * lh),
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
@@ -328,12 +368,17 @@ class PDFService {
                 ed.degree,
                 style: pw.TextStyle(
                   fontWeight: pw.FontWeight.bold, 
-                  fontSize: CVTheme.itemTitleSize,
+                  fontSize: sizes['itemTitle'],
+                  lineSpacing: sizes['itemTitle']! * (lh - 1.0),
                 ),
               ),
               pw.Text(
                 '${ed.startDate} - ${ed.endDate}',
-                style: const pw.TextStyle(color: CVTheme.lightTextColor, fontSize: 10),
+                style: pw.TextStyle(
+                  color: CVTheme.lightTextColor, 
+                  fontSize: sizes['fieldLabel'],
+                  lineSpacing: sizes['fieldLabel']! * (lh - 1.0),
+                ),
               ),
             ],
           ),
@@ -342,36 +387,43 @@ class PDFService {
             style: pw.TextStyle(
               fontStyle: pw.FontStyle.italic,
               color: CVTheme.secondaryColor,
-              fontSize: 11,
+              fontSize: sizes['itemText'],
+              lineSpacing: sizes['itemText']! * (lh - 1.0),
             ),
           ),
           if (ed.description.isNotEmpty) ...[
-            pw.SizedBox(height: 4),
-            pw.Text(ed.description, style: const pw.TextStyle(fontSize: CVTheme.bodyFontSize)),
+            pw.SizedBox(height: 4 * lh),
+            pw.Text(ed.description, style: pw.TextStyle(
+              fontSize: sizes['body'],
+              lineSpacing: sizes['body']! * (lh - 1.0),
+            )),
           ]
         ],
       ),
     );
   }
 
-  static pw.Widget _buildSkillsList(List<Skill> skills) {
+  static pw.Widget _buildSkillsList(List<Skill> skills, double bodySize, double lh) {
     final skillNames = skills.map((s) => s.name).where((n) => n.isNotEmpty).toList();
     if (skillNames.isEmpty) return pw.SizedBox();
 
     return pw.Wrap(
       spacing: 8,
-      runSpacing: 4,
+      runSpacing: 4 * lh,
       children: skillNames
           .map(
-            (s) => pw.Text('• $s', style: const pw.TextStyle(fontSize: CVTheme.bodyFontSize)),
+            (s) => pw.Text('• $s', style: pw.TextStyle(
+              fontSize: bodySize,
+              lineSpacing: bodySize * (lh - 1.0),
+            )),
           )
           .toList(),
     );
   }
 
-  static pw.Widget _buildCertificationItem(Certification cert) {
+  static pw.Widget _buildCertificationItem(Certification cert, Map<String, double> sizes, double lh) {
     return pw.Padding(
-      padding: const pw.EdgeInsets.only(bottom: CVTheme.itemSpacing),
+      padding: pw.EdgeInsets.only(bottom: CVTheme.itemSpacing * lh),
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
@@ -386,7 +438,8 @@ class PDFService {
                         text: cert.title,
                         style: pw.TextStyle(
                           fontWeight: pw.FontWeight.bold, 
-                          fontSize: CVTheme.itemTitleSize,
+                          fontSize: sizes['itemTitle'],
+                          lineSpacing: sizes['itemTitle']! * (lh - 1.0),
                         ),
                       ),
                       if (!cert.isCompleted)
@@ -395,7 +448,8 @@ class PDFService {
                           style: pw.TextStyle(
                             fontStyle: pw.FontStyle.italic,
                             color: PdfColors.orange800,
-                            fontSize: 10,
+                            fontSize: sizes['fieldLabel'],
+                            lineSpacing: sizes['fieldLabel']! * (lh - 1.0),
                           ),
                         ),
                     ],
@@ -404,7 +458,11 @@ class PDFService {
               ),
               pw.Text(
                 cert.date,
-                style: const pw.TextStyle(color: CVTheme.lightTextColor, fontSize: 10),
+                style: pw.TextStyle(
+                  color: CVTheme.lightTextColor, 
+                  fontSize: sizes['fieldLabel'],
+                  lineSpacing: sizes['fieldLabel']! * (lh - 1.0),
+                ),
               ),
             ],
           ),
@@ -413,21 +471,25 @@ class PDFService {
             style: pw.TextStyle(
               fontStyle: pw.FontStyle.italic,
               color: CVTheme.secondaryColor,
-              fontSize: 11,
+              fontSize: sizes['itemText'],
+              lineSpacing: sizes['itemText']! * (lh - 1.0),
             ),
           ),
           if (cert.description.isNotEmpty) ...[
-            pw.SizedBox(height: 4),
-            pw.Text(cert.description, style: const pw.TextStyle(fontSize: CVTheme.bodyFontSize)),
+            pw.SizedBox(height: 4 * lh),
+            pw.Text(cert.description, style: pw.TextStyle(
+              fontSize: sizes['body'],
+              lineSpacing: sizes['body']! * (lh - 1.0),
+            )),
           ]
         ],
       ),
     );
   }
 
-  static pw.Widget _buildReferenceItem(Reference ref) {
+  static pw.Widget _buildReferenceItem(Reference ref, Map<String, double> sizes, double lh) {
     return pw.Padding(
-      padding: const pw.EdgeInsets.only(bottom: CVTheme.itemSpacing),
+      padding: pw.EdgeInsets.only(bottom: CVTheme.itemSpacing * lh),
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
@@ -435,7 +497,8 @@ class PDFService {
             ref.name,
             style: pw.TextStyle(
               fontWeight: pw.FontWeight.bold, 
-              fontSize: CVTheme.itemTitleSize,
+              fontSize: sizes['itemTitle'],
+              lineSpacing: sizes['itemTitle']! * (lh - 1.0),
             ),
           ),
           pw.Text(
@@ -443,17 +506,27 @@ class PDFService {
             style: pw.TextStyle(
               fontStyle: pw.FontStyle.italic,
               color: CVTheme.secondaryColor,
-              fontSize: 11,
+              fontSize: sizes['itemText'],
+              lineSpacing: sizes['itemText']! * (lh - 1.0),
             ),
           ),
           pw.Row(
             children: [
               if (ref.email.isNotEmpty) 
-                pw.Text('Email: ${ref.email}', style: const pw.TextStyle(fontSize: CVTheme.bodyFontSize)),
+                pw.Text('Email: ${ref.email}', style: pw.TextStyle(
+                  fontSize: sizes['body'],
+                  lineSpacing: sizes['body']! * (lh - 1.0),
+                )),
               if (ref.email.isNotEmpty && ref.phone.isNotEmpty)
-                pw.Text(' | ', style: const pw.TextStyle(fontSize: CVTheme.bodyFontSize)),
+                pw.Text(' | ', style: pw.TextStyle(
+                  fontSize: sizes['body'],
+                  lineSpacing: sizes['body']! * (lh - 1.0),
+                )),
               if (ref.phone.isNotEmpty)
-                pw.Text('Phone: ${ref.phone}', style: const pw.TextStyle(fontSize: CVTheme.bodyFontSize)),
+                pw.Text('Phone: ${ref.phone}', style: pw.TextStyle(
+                  fontSize: sizes['body'],
+                  lineSpacing: sizes['body']! * (lh - 1.0),
+                )),
             ],
           ),
         ],
@@ -463,7 +536,7 @@ class PDFService {
 
   /// Parses and renders rich text from Quill Delta JSON to PDF widgets.
   /// Supports bold, italic, underline, list bullets, numbering, and alignment.
-  static List<pw.Widget> _buildRichText(String jsonString, pw.Font regular, pw.Font bold, pw.Font italic, pw.Font boldItalic) {
+  static List<pw.Widget> _buildRichText(String jsonString, pw.Font regular, pw.Font bold, pw.Font italic, pw.Font boldItalic, double bodySize, double lh) {
     try {
       final List<dynamic> delta = jsonDecode(jsonString);
       final List<pw.Widget> widgets = [];
@@ -488,7 +561,7 @@ class PDFService {
             for (int i = 0; i < parts.length; i++) {
               if (parts[i].isNotEmpty) {
                 // Add remaining text before the newline
-                currentSpans.add(_buildSpan(parts[i], attributes, regular, bold, italic, boldItalic));
+                currentSpans.add(_buildSpan(parts[i], attributes, regular, bold, italic, boldItalic, bodySize, lh));
               }
 
               // The newline itself often carries attributes for the whole line in Quill (like list or header)
@@ -539,8 +612,12 @@ class PDFService {
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
                         pw.Padding(
-                          padding: const pw.EdgeInsets.only(right: 8, top: 2),
-                          child: pw.Text(prefix, style: pw.TextStyle(fontSize: CVTheme.bodyFontSize, font: regular)),
+                          padding: pw.EdgeInsets.only(right: 8, top: 2 * lh),
+                          child: pw.Text(prefix, style: pw.TextStyle(
+                            fontSize: bodySize, 
+                            font: regular,
+                            lineSpacing: bodySize * (lh - 1.0),
+                          )),
                         ),
                         pw.Expanded(child: richText),
                       ],
@@ -550,7 +627,7 @@ class PDFService {
                   }
                 } else if (widgets.isNotEmpty) {
                   // Empty line (extra newline)
-                  widgets.add(pw.SizedBox(height: 4));
+                  widgets.add(pw.SizedBox(height: 4 * lh));
                 }
 
                 // Reset line state
@@ -562,7 +639,7 @@ class PDFService {
             }
           } else {
             // Normal text without newline
-            currentSpans.add(_buildSpan(insert, attributes, regular, bold, italic, boldItalic));
+            currentSpans.add(_buildSpan(insert, attributes, regular, bold, italic, boldItalic, bodySize, lh));
           }
         }
       }
@@ -577,14 +654,18 @@ class PDFService {
       // Fallback for plain text if JSON parsing fails
       return [
         pw.Text(jsonString, 
-          style: pw.TextStyle(fontSize: CVTheme.bodyFontSize, font: regular),
+          style: pw.TextStyle(
+            fontSize: bodySize, 
+            font: regular,
+            lineSpacing: bodySize * (lh - 1.0),
+          ),
           textAlign: pw.TextAlign.left)
       ];
     }
   }
 
   /// Creates a pw.TextSpan with appropriate styles for a snippet of text.
-  static pw.InlineSpan _buildSpan(String text, Map<String, dynamic>? attr, pw.Font regular, pw.Font bold, pw.Font italic, pw.Font boldItalic) {
+  static pw.InlineSpan _buildSpan(String text, Map<String, dynamic>? attr, pw.Font regular, pw.Font bold, pw.Font italic, pw.Font boldItalic, double bodySize, double lh) {
     final isBold = attr?['bold'] == true;
     final isItalic = attr?['italic'] == true;
     final isUnderline = attr?['underline'] == true;
@@ -601,9 +682,10 @@ class PDFService {
     return pw.TextSpan(
       text: text,
       style: pw.TextStyle(
-        fontSize: CVTheme.bodyFontSize,
+        fontSize: bodySize,
         font: selectedFont,
         decoration: isUnderline ? pw.TextDecoration.underline : null,
+        lineSpacing: bodySize * (lh - 1.0),
       ),
     );
   }

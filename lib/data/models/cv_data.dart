@@ -15,12 +15,14 @@ class PersonalInfo {
   String headerAlignment; // 'left', 'center', 'right'
   List<CVField> fields;
   String profileSummary;
+  bool showNameAsHeader;
 
   PersonalInfo({
     this.jobTitle = '',
     this.headerAlignment = 'left',
     List<CVField>? fields,
     this.profileSummary = '',
+    this.showNameAsHeader = false,
   }) : fields = fields ?? [
           CVField(title: 'Full Name', isCompulsory: true),
           CVField(title: 'Email', isCompulsory: true),
@@ -184,6 +186,8 @@ class CVData {
   List<Certification> certifications;
   List<CustomSection> customSections;
   List<String> sectionOrder;
+  double baseFontSize;
+  double lineHeight;
 
   CVData({
     PersonalInfo? personalInfo,
@@ -196,6 +200,8 @@ class CVData {
     List<Certification>? certifications,
     List<CustomSection>? customSections,
     List<String>? sectionOrder,
+    this.baseFontSize = 10.0,
+    this.lineHeight = 1.0,
   })  : personalInfo = personalInfo ?? PersonalInfo(),
         sectionTitles = sectionTitles ?? SectionTitles(),
         education = education ?? [],

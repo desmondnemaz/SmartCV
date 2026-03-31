@@ -168,6 +168,17 @@ class CVProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // --- Font Size ---
+  void updateBaseFontSize(double size) {
+    _cvData.baseFontSize = size.clamp(10, 14);
+    notifyListeners();
+  }
+  
+  void updateLineHeight(double height) {
+    _cvData.lineHeight = height;
+    notifyListeners();
+  }
+
   // Clear all data
   void clearAll() {
     _cvData = CVData();

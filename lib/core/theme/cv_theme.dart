@@ -20,7 +20,7 @@ class CVTheme {
   static const PdfColor lightTextColor = PdfColors.grey700;
 
   // Spacing & Layout
-  static const double pageMargin = 32.0;
+  static const double pageMargin = 44.0;
   static const double sectionSpacing = 20.0;
   static const double itemSpacing = 12.0;
   static const double lineSpacing = 4.0;
