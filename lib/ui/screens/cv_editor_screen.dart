@@ -1385,26 +1385,24 @@ class DebouncedPdfPreview extends StatefulWidget {
 
 class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
   Timer? _debounceTimer;
-  late bool _shouldBuild;
+  late CVData _previewData;
 
   @override
   void initState() {
     super.initState();
-    // Start the timer on initialization to ensure the first build is debounced if many updates happen at startup
-    // or just let it build immediately.
-    _shouldBuild = true;
+    _previewData = widget.data;
   }
 
   @override
   void didUpdateWidget(DebouncedPdfPreview oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // When the data changes, we wait 800ms before allowing a re-build of the PDF.
-    // This stops the "nonstop loading" while the user is actively typing.
+    // Use a shorter debounce of 400ms for more responsive feel.
+    // Instead of showing a spinner, we keep the old data until the new is ready.
     _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 800), () {
+    _debounceTimer = Timer(const Duration(milliseconds: 400), () {
       if (mounted) {
         setState(() {
-          _shouldBuild = true;
+          _previewData = widget.data;
         });
       }
     });
@@ -1418,24 +1416,6 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
 
   @override
   Widget build(BuildContext context) {
-    // If we're debouncing, we show a loading indicator but keep the layout stable.
-    if (!_shouldBuild) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Updating preview...'),
-          ],
-        ),
-      );
-    }
-
-    // This build method will be called again when _shouldBuild becomes true.
-    // We set it to false immediately after starting a build so that the next widget update 
-    // will trigger the debounce timer again.
-    _shouldBuild = false; 
 
     return Column(
       children: [
@@ -1526,7 +1506,7 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
         const Divider(height: 1),
         Expanded(
           child: PdfPreview(
-            build: (format) => PDFService.generateCV(widget.data),
+            build: (format) => PDFService.generateCV(_previewData),
             allowSharing: true,
             allowPrinting: true,
             canChangeOrientation: false,

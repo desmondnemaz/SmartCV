@@ -41,6 +41,8 @@ dependencies:
   printing: ^5.11.1
   flutter_quill: ^11.5.0
   google_fonts: ^8.0.2
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.7
 
 dev_dependencies:
   flutter_test:
@@ -75,3 +77,17 @@ flutter:
   # For details regarding adding assets from package dependencies, see
   # https://flutter.dev/to/asset-from-package
 
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/logo.png"
+  min_sdk_android: 21 # android min sdk min:16, default:21
+  adaptive_icon_background: "#FFFFFF" # Required for Android adaptive icons
+  adaptive_icon_foreground: "assets/logo.png"
+
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: assets/logo.png
+  android: true
+  ios: true
+  web: true  # <--- Add this

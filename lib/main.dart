@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 import 'core/theme/app_theme.dart';
 import 'providers/cv_provider.dart';
@@ -9,7 +10,9 @@ import 'providers/theme_provider.dart';
 import 'ui/screens/home_screen.dart';
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
   runApp(
     MultiProvider(
       providers: [
@@ -19,6 +22,10 @@ void main() {
       child: const MyApp(),
     ),
   );
+
+  // We can remove the splash screen immediately after runApp starts building the tree,
+  // or after actual initialization if needed.
+  FlutterNativeSplash.remove();
 }
 
 class MyApp extends StatelessWidget {
@@ -29,7 +36,7 @@ class MyApp extends StatelessWidget {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return MaterialApp(
-      title: 'CV Maker',
+      title: 'SmartCV ZW',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeProvider.themeMode,
