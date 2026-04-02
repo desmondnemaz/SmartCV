@@ -189,6 +189,7 @@ class CVData {
   double baseFontSize;
   double lineHeight;
   String primaryColorHex;
+  String fontFamily;
 
   CVData({
     PersonalInfo? personalInfo,
@@ -204,6 +205,7 @@ class CVData {
     this.baseFontSize = 10.0,
     this.lineHeight = 1.0,
     this.primaryColorHex = '#0D47A1',
+    this.fontFamily = 'Roboto',
   })  : personalInfo = personalInfo ?? PersonalInfo(),
         sectionTitles = sectionTitles ?? SectionTitles(),
         education = education ?? [],

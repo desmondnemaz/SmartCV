@@ -183,6 +183,11 @@ class CVProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void updateFontFamily(String font) {
+    _cvData.fontFamily = font;
+    notifyListeners();
+  }
+
   // Clear all data
   void clearAll() {
     _cvData = CVData();

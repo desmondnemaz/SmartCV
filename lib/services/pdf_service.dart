@@ -8,16 +8,109 @@ import '../data/models/cv_data.dart';
 import '../core/theme/cv_theme.dart';
 
 class PDFService {
+  static String? _currentFontFamily;
   static pw.Font? _fontRegular;
   static pw.Font? _fontBold;
   static pw.Font? _fontItalic;
   static pw.Font? _fontBoldItalic;
 
-  static Future<void> _loadFonts() async {
-    _fontRegular ??= await PdfGoogleFonts.robotoRegular();
-    _fontBold ??= await PdfGoogleFonts.robotoBold();
-    _fontItalic ??= await PdfGoogleFonts.robotoItalic();
-    _fontBoldItalic ??= await PdfGoogleFonts.robotoBoldItalic();
+  static Future<pw.Font> _loadFontSafe(Future<pw.Font> Function() onlineProvider, String? assetPath) async {
+    try {
+      return await onlineProvider();
+    } catch (_) {
+      if (assetPath != null) {
+        try {
+          final data = await rootBundle.load(assetPath);
+          return pw.Font.ttf(data);
+        } catch (e) {
+          final fallback = await rootBundle.load('assets/fonts/Roboto-Regular.ttf');
+          return pw.Font.ttf(fallback);
+        }
+      }
+      final fallback = await rootBundle.load('assets/fonts/Roboto-Regular.ttf');
+      return pw.Font.ttf(fallback);
+    }
+  }
+
+  static Future<void> _loadFonts(String fontFamily) async {
+    if (_currentFontFamily == fontFamily && _fontRegular != null) return;
+    _currentFontFamily = fontFamily;
+
+    switch (fontFamily) {
+      case 'Arimo':
+        _fontRegular = await _loadFontSafe(PdfGoogleFonts.arimoRegular, 'assets/fonts/Roboto-Regular.ttf');
+        _fontBold = await _loadFontSafe(PdfGoogleFonts.arimoBold, 'assets/fonts/Roboto-Bold.ttf');
+        _fontItalic = await _loadFontSafe(PdfGoogleFonts.arimoItalic, 'assets/fonts/Roboto-Italic.ttf');
+        _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.arimoBoldItalic, 'assets/fonts/Roboto-Bold.ttf');
+        break;
+      case 'Carlito':
+        _fontRegular = await _loadFontSafe(PdfGoogleFonts.carlitoRegular, 'assets/fonts/Roboto-Regular.ttf');
+        _fontBold = await _loadFontSafe(PdfGoogleFonts.carlitoBold, 'assets/fonts/Roboto-Bold.ttf');
+        _fontItalic = await _loadFontSafe(PdfGoogleFonts.carlitoItalic, 'assets/fonts/Roboto-Italic.ttf');
+        _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.carlitoBoldItalic, 'assets/fonts/Roboto-Bold.ttf');
+        break;
+      case 'Courier Prime':
+        _fontRegular = await _loadFontSafe(PdfGoogleFonts.courierPrimeRegular, null);
+        _fontBold = await _loadFontSafe(PdfGoogleFonts.courierPrimeBold, null);
+        _fontItalic = await _loadFontSafe(PdfGoogleFonts.courierPrimeItalic, null);
+        _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.courierPrimeBoldItalic, null);
+        break;
+      case 'Open Sans':
+        _fontRegular = await _loadFontSafe(PdfGoogleFonts.openSansRegular, 'assets/fonts/Roboto-Regular.ttf');
+        _fontBold = await _loadFontSafe(PdfGoogleFonts.openSansBold, 'assets/fonts/Roboto-Bold.ttf');
+        _fontItalic = await _loadFontSafe(PdfGoogleFonts.openSansItalic, 'assets/fonts/Roboto-Italic.ttf');
+        _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.openSansBoldItalic, 'assets/fonts/Roboto-Bold.ttf');
+        break;
+      case 'EB Garamond':
+      case 'Noto Serif': // Use same logic for Garamond/Serif
+        _fontRegular = await _loadFontSafe(PdfGoogleFonts.notoSerifRegular, 'assets/fonts/EBGaramond-Regular.ttf');
+        _fontBold = await _loadFontSafe(PdfGoogleFonts.notoSerifBold, 'assets/fonts/EBGaramond-Bold.ttf');
+        _fontItalic = await _loadFontSafe(PdfGoogleFonts.notoSerifItalic, 'assets/fonts/EBGaramond-Regular.ttf');
+        _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.notoSerifBoldItalic, 'assets/fonts/EBGaramond-Bold.ttf');
+        break;
+      case 'Gelasio':
+        _fontRegular = await _loadFontSafe(PdfGoogleFonts.gelasioRegular, 'assets/fonts/EBGaramond-Regular.ttf');
+        _fontBold = await _loadFontSafe(PdfGoogleFonts.gelasioBold, 'assets/fonts/EBGaramond-Bold.ttf');
+        _fontItalic = await _loadFontSafe(PdfGoogleFonts.gelasioItalic, 'assets/fonts/EBGaramond-Regular.ttf');
+        _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.gelasioBoldItalic, 'assets/fonts/EBGaramond-Bold.ttf');
+        break;
+      case 'Lato':
+        _fontRegular = await _loadFontSafe(PdfGoogleFonts.latoRegular, 'assets/fonts/Roboto-Regular.ttf');
+        _fontBold = await _loadFontSafe(PdfGoogleFonts.latoBold, 'assets/fonts/Roboto-Bold.ttf');
+        _fontItalic = await _loadFontSafe(PdfGoogleFonts.latoItalic, 'assets/fonts/Roboto-Italic.ttf');
+        _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.latoBoldItalic, 'assets/fonts/Roboto-Bold.ttf');
+        break;
+      case 'Noto Sans':
+        _fontRegular = await _loadFontSafe(PdfGoogleFonts.notoSansRegular, 'assets/fonts/Roboto-Regular.ttf');
+        _fontBold = await _loadFontSafe(PdfGoogleFonts.notoSansBold, 'assets/fonts/Roboto-Bold.ttf');
+        _fontItalic = await _loadFontSafe(PdfGoogleFonts.notoSansItalic, 'assets/fonts/Roboto-Italic.ttf');
+        _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.notoSansBoldItalic, 'assets/fonts/Roboto-Bold.ttf');
+        break;
+      case 'Poppins':
+        _fontRegular = await _loadFontSafe(PdfGoogleFonts.poppinsRegular, 'assets/fonts/Poppins-Regular.ttf');
+        _fontBold = await _loadFontSafe(PdfGoogleFonts.poppinsBold, 'assets/fonts/Poppins-Bold.ttf');
+        _fontItalic = await _loadFontSafe(PdfGoogleFonts.poppinsItalic, 'assets/fonts/Poppins-Regular.ttf');
+        _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.poppinsBoldItalic, 'assets/fonts/Poppins-Bold.ttf');
+        break;
+      case 'Tinos':
+        _fontRegular = await _loadFontSafe(PdfGoogleFonts.tinosRegular, 'assets/fonts/EBGaramond-Regular.ttf');
+        _fontBold = await _loadFontSafe(PdfGoogleFonts.tinosBold, 'assets/fonts/EBGaramond-Bold.ttf');
+        _fontItalic = await _loadFontSafe(PdfGoogleFonts.tinosItalic, 'assets/fonts/EBGaramond-Regular.ttf');
+        _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.tinosBoldItalic, 'assets/fonts/EBGaramond-Bold.ttf');
+        break;
+      case 'Source Sans 3':
+        _fontRegular = await _loadFontSafe(PdfGoogleFonts.sourceSans3Regular, 'assets/fonts/Roboto-Regular.ttf');
+        _fontBold = await _loadFontSafe(PdfGoogleFonts.sourceSans3Bold, 'assets/fonts/Roboto-Bold.ttf');
+        _fontItalic = await _loadFontSafe(PdfGoogleFonts.sourceSans3Italic, 'assets/fonts/Roboto-Italic.ttf');
+        _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.sourceSans3BoldItalic, 'assets/fonts/Roboto-Bold.ttf');
+        break;
+      case 'Roboto':
+      default:
+        _fontRegular = await _loadFontSafe(PdfGoogleFonts.robotoRegular, 'assets/fonts/Roboto-Regular.ttf');
+        _fontBold = await _loadFontSafe(PdfGoogleFonts.robotoBold, 'assets/fonts/Roboto-Bold.ttf');
+        _fontItalic = await _loadFontSafe(PdfGoogleFonts.robotoItalic, 'assets/fonts/Roboto-Italic.ttf');
+        _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.robotoBoldItalic, 'assets/fonts/Roboto-Bold.ttf');
+    }
   }
 
   static Map<String, double> _calculateFontSizes(double x) {
@@ -34,7 +127,7 @@ class PDFService {
   }
 
   static Future<Uint8List> generateCV(CVData data) async {
-    await _loadFonts();
+    await _loadFonts(data.fontFamily);
 
     final pdf = pw.Document(
       theme: pw.ThemeData.withFont(

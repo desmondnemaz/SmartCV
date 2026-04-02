@@ -9,6 +9,7 @@ import 'package:flutter_quill/flutter_quill.dart' as fq;
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class CVEditorScreen extends StatefulWidget {
   const CVEditorScreen({super.key});
@@ -1542,6 +1543,55 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
                 ),
               ),
               const SizedBox(width: 12),
+              PopupMenuButton<String>(
+                offset: const Offset(0, 40),
+                tooltip: 'Select Font',
+                icon: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.blue.shade100),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Aa',
+                        style: GoogleFonts.getFont(widget.data.fontFamily,
+                            fontSize: 14, fontWeight: FontWeight.bold, color: Colors.blue.shade800),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(Icons.keyboard_arrow_up, size: 14, color: Colors.blue.shade800),
+                    ],
+                  ),
+                ),
+                onSelected: (val) {
+                  context.read<CVProvider>().updateFontFamily(val);
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    enabled: false,
+                    child: Text('FONT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
+                  ),
+                  ...[
+                    {'name': 'Arimo', 'label': 'Arial'},
+                    {'name': 'Carlito', 'label': 'Calibri'},
+                    {'name': 'Courier Prime', 'label': 'Courier New'},
+                    {'name': 'Open Sans', 'label': 'DejaVu Sans'},
+                    {'name': 'Noto Serif', 'label': 'Garamond'},
+                    {'name': 'Gelasio', 'label': 'Georgia'},
+                    {'name': 'Roboto', 'label': 'Helvetica'},
+                    {'name': 'Lato', 'label': 'Lato'},
+                    {'name': 'Noto Sans', 'label': 'Noto Sans'},
+                    {'name': 'Noto Serif', 'label': 'Noto Serif'},
+                    {'name': 'Poppins', 'label': 'Poppins'},
+                    {'name': 'Tinos', 'label': 'Times New Roman'},
+                    {'name': 'Source Sans 3', 'label': 'Trebuchet'},
+                  ].map((f) => _buildFontItem(f['name']!, f['label']!, widget.data.fontFamily)),
+                ],
+              ),
+              const SizedBox(width: 12),
               // Prominent Download Icon
               IconButton(
                 icon: const Icon(Icons.file_download, size: 22, color: Colors.blue),
@@ -1629,6 +1679,26 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
           ],
         );
       },
+    );
+  }
+
+  PopupMenuItem<String> _buildFontItem(String value, String label, String current) {
+    return PopupMenuItem<String>(
+      value: value,
+      child: Row(
+        children: [
+          SizedBox(
+            width: 24,
+            child: current == value ? const Icon(Icons.check, size: 16) : null,
+          ),
+          Expanded(
+            child: Text(
+              label,
+              style: GoogleFonts.getFont(value, fontSize: 13),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
