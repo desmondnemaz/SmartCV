@@ -175,7 +175,11 @@ class CVProvider with ChangeNotifier {
   }
   
   void updateLineHeight(double height) {
-    _cvData.lineHeight = height;
+    notifyListeners();
+  }
+
+  void updatePrimaryColor(String hex) {
+    _cvData.primaryColorHex = hex;
     notifyListeners();
   }
 

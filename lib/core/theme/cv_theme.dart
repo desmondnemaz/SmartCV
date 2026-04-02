@@ -21,9 +21,9 @@ class CVTheme {
 
   // Spacing & Layout
   static const double pageMargin = 44.0;
-  static const double sectionSpacing = 20.0;
-  static const double itemSpacing = 12.0;
-  static const double lineSpacing = 4.0;
+  static const double sectionSpacing = 12.0; // Reduced from 20
+  static const double itemSpacing = 8.0;    // Reduced from 12
+  static const double lineSpacing = 3.0;    // Reduced from 4.0
   static const double paddingSmall = 8.0;
   static const double paddingMedium = 16.0;
   static const double paddingLarge = 24.0;

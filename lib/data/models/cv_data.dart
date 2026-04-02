@@ -24,7 +24,7 @@ class PersonalInfo {
     this.profileSummary = '',
     this.showNameAsHeader = false,
   }) : fields = fields ?? [
-          CVField(title: 'Full Name', isCompulsory: true),
+          CVField(title: 'Name', isCompulsory: true),
           CVField(title: 'Email', isCompulsory: true),
           CVField(title: 'Phone', isCompulsory: true),
           CVField(title: 'Address', isCompulsory: true),
@@ -188,6 +188,7 @@ class CVData {
   List<String> sectionOrder;
   double baseFontSize;
   double lineHeight;
+  String primaryColorHex;
 
   CVData({
     PersonalInfo? personalInfo,
@@ -202,6 +203,7 @@ class CVData {
     List<String>? sectionOrder,
     this.baseFontSize = 10.0,
     this.lineHeight = 1.0,
+    this.primaryColorHex = '#0D47A1',
   })  : personalInfo = personalInfo ?? PersonalInfo(),
         sectionTitles = sectionTitles ?? SectionTitles(),
         education = education ?? [],

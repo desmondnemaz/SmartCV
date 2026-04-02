@@ -8,6 +8,7 @@ import '../../data/models/cv_data.dart';
 import 'package:flutter_quill/flutter_quill.dart' as fq;
 import 'dart:convert';
 import 'dart:async';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 class CVEditorScreen extends StatefulWidget {
   const CVEditorScreen({super.key});
@@ -61,6 +62,8 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
   final List<_FieldControllerPair> _fieldControllers = [];
   // Map to store Quill-related controllers for custom sections to persist state and dispose properly
   final Map<String, _CustomSectionControllers> _customControllers = {};
+  // Map for list item descriptions (e.g. 'exp_0', 'edu_1', etc.)
+  final Map<String, _CustomSectionControllers> _itemControllers = {};
 
   @override
   void initState() {
@@ -152,7 +155,119 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
     for (var controllers in _customControllers.values) {
       controllers.dispose();
     }
+    for (var controllers in _itemControllers.values) {
+      controllers.dispose();
+    }
     super.dispose();
+  }
+
+  Widget _buildQuillEditor({
+    required String id,
+    required String initialValue,
+    required Function(String) onChanged,
+    double height = 150,
+    String placeholder = 'Describe...',
+  }) {
+    if (!_itemControllers.containsKey(id)) {
+      fq.QuillController controller;
+      try {
+        if (initialValue.isEmpty) {
+          controller = fq.QuillController.basic();
+        } else if (initialValue.startsWith('[') || initialValue.startsWith('{')) {
+          controller = fq.QuillController(
+            document: fq.Document.fromJson(jsonDecode(initialValue)),
+            selection: const TextSelection.collapsed(offset: 0),
+          );
+        } else {
+          controller = fq.QuillController.basic();
+          controller.document.insert(0, initialValue);
+        }
+      } catch (e) {
+        controller = fq.QuillController.basic();
+        if (initialValue.isNotEmpty) {
+          controller.document.insert(0, initialValue);
+        }
+      }
+
+      controller.addListener(() {
+        final json = jsonEncode(controller.document.toDelta().toJson());
+        onChanged(json);
+      });
+
+      _itemControllers[id] = _CustomSectionControllers(
+        quillController: controller,
+        scrollController: ScrollController(),
+        focusNode: FocusNode(),
+      );
+    }
+
+    final controllers = _itemControllers[id]!;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(8),
+            color: Colors.grey.shade50,
+          ),
+          child: Column(
+            children: [
+              fq.QuillSimpleToolbar(
+                controller: controllers.quillController,
+                config: const fq.QuillSimpleToolbarConfig(
+                  showInlineCode: false,
+                  showCodeBlock: false,
+                  showSubscript: false,
+                  showSuperscript: false,
+                  showClearFormat: false,
+                  showSearchButton: false,
+                  showFontFamily: false,
+                  showFontSize: false,
+                  showBoldButton: true,
+                  showItalicButton: true,
+                  showUnderLineButton: true,
+                  showStrikeThrough: false,
+                  showColorButton: false,
+                  showBackgroundColorButton: false,
+                  showAlignmentButtons: true,
+                  showLeftAlignment: true,
+                  showCenterAlignment: true,
+                  showRightAlignment: true,
+                  showJustifyAlignment: true,
+                  showListNumbers: true,
+                  showListBullets: true,
+                  showListCheck: false,
+                  showQuote: false,
+                  showIndent: false,
+                  showLink: false,
+                  showUndo: true,
+                  showRedo: true,
+                  multiRowsDisplay: false,
+                ),
+              ),
+              const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: SizedBox(
+                  height: height,
+                  child: fq.QuillEditor(
+                    controller: controllers.quillController,
+                    scrollController: controllers.scrollController,
+                    focusNode: controllers.focusNode,
+                    config: fq.QuillEditorConfig(
+                      placeholder: placeholder,
+                      expands: true,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -303,7 +418,7 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
         ),
         const SizedBox(height: 16),
         CheckboxListTile(
-          title: const Text('Use Full Name as Header Title', style: TextStyle(fontSize: 14)),
+          title: const Text('Use Name as Header Title', style: TextStyle(fontSize: 14)),
           subtitle: const Text('Replaces "CURRICULUM VITAE" with your name', style: TextStyle(fontSize: 12)),
           value: _showNameAsHeader,
           onChanged: (val) {
@@ -578,50 +693,8 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
         final customSections = provider.cvData.customSections;
         final sectionIndex = customSections.indexWhere((s) => s.id == id);
         if (sectionIndex == -1) return const SizedBox.shrink();
-        
+
         final section = customSections[sectionIndex];
-        
-        // --- Manage Quill Controller ---
-        if (!_customControllers.containsKey(id)) {
-          fq.QuillController quillController;
-          try {
-            if (section.description.isEmpty) {
-              quillController = fq.QuillController.basic();
-            } else {
-              // Try to load as JSON (Quill Delta)
-              final doc = fq.Document.fromJson(jsonDecode(section.description));
-              quillController = fq.QuillController(
-                document: doc,
-                selection: const TextSelection.collapsed(offset: 0),
-              );
-            }
-          } catch (e) {
-            // Fallback for plain text
-            quillController = fq.QuillController.basic();
-            if (section.description.isNotEmpty) {
-              quillController.document.insert(0, section.description);
-            }
-          }
-
-          // Add listener to save changes to provider
-          quillController.addListener(() {
-            final json = jsonEncode(quillController.document.toDelta().toJson());
-            // Only update if changes actually happen to avoid infinite loops or heavy notifying
-            if (section.description != json) {
-              section.description = json;
-              provider.updateCustomSection(id, section);
-            }
-          });
-          
-          _customControllers[id] = _CustomSectionControllers(
-            quillController: quillController,
-            scrollController: ScrollController(),
-            focusNode: FocusNode(),
-          );
-        }
-
-        final controllers = _customControllers[id]!;
-        final controller = controllers.quillController;
 
         return ExpansionTile(
           leading: const Icon(Icons.dashboard_customize),
@@ -640,8 +713,7 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
               children: [
                 TextButton.icon(
                   onPressed: () {
-                    // Dispose controller when removing section
-                    _customControllers.remove(id)?.dispose();
+                    _itemControllers.remove(id)?.dispose();
                     provider.removeCustomSection(id);
                   },
                   icon: const Icon(Icons.delete, color: Colors.red),
@@ -649,7 +721,6 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
                 ),
               ],
             ),
-            // --- Rich Text Editor UI ---
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -659,69 +730,15 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
                         color: Colors.blueGrey,
                         fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(8),
-                    color: Colors.grey.shade50,
-                  ),
-                  child: Column(
-                    children: [
-                      // Editor Area
-                      Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: SizedBox(
-                          height: 250,
-                          child: fq.QuillEditor(
-                            controller: controller,
-                            scrollController: controllers.scrollController,
-                            focusNode: controllers.focusNode,
-                            config: const fq.QuillEditorConfig(
-                              placeholder: 'Describe this section...',
-                              expands: true,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const Divider(height: 1),
-                      // Toolbar at the bottom with specific options as requested
-                      fq.QuillSimpleToolbar(
-                        controller: controller,
-                        config: const fq.QuillSimpleToolbarConfig(
-
-                          // Hide the buttons
-                          showInlineCode: false,
-                          showCodeBlock: false,    // Hides <>
-                          showSubscript: false,    // Hides X₂
-                          showSuperscript: false,  // Hides X²
-                          showClearFormat: false,   // Hides the T with the slash
-                          showSearchButton: false,
-                          showFontFamily: false,
-                          showFontSize: false,
-                          showBoldButton: true,
-                          showItalicButton: true,
-                          showUnderLineButton: true,
-                          showStrikeThrough: false,
-                          showColorButton: false,
-                          showBackgroundColorButton: false,
-                          showAlignmentButtons: true,
-                          showLeftAlignment: true,
-                          showCenterAlignment: true,
-                          showRightAlignment: true,
-                          showJustifyAlignment: true,
-                          showListNumbers: true,
-                          showListBullets: true,
-                          showListCheck: false,
-                          showQuote: false,
-                          showIndent: false,
-                          showLink: false,
-                          showUndo: true,
-                          showRedo: true,
-                          multiRowsDisplay: false,
-                        ),
-                      ),
-                    ],
-                  ),
+                _buildQuillEditor(
+                  id: id,
+                  initialValue: section.description,
+                  onChanged: (val) {
+                    section.description = val;
+                    provider.updateCustomSection(id, section);
+                  },
+                  height: 250,
+                  placeholder: 'Describe this section...',
                 ),
               ],
             ),
@@ -767,7 +784,10 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
                               IconButton(
                                 icon: const Icon(Icons.delete, color: Colors.red),
                                 visualDensity: VisualDensity.compact,
-                                onPressed: () => provider.removeExperience(index),
+                                onPressed: () {
+                                  _itemControllers.remove('exp_$index')?.dispose();
+                                  provider.removeExperience(index);
+                                },
                               ),
                             ],
                           ),
@@ -815,14 +835,17 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
                             ],
                           ),
                           const SizedBox(height: 8),
-                          TextFormField(
+                          const Text('Description', style: TextStyle(fontSize: 11, color: Colors.blueGrey, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          _buildQuillEditor(
+                            id: 'exp_$index',
                             initialValue: exp.description,
-                            decoration: const InputDecoration(labelText: 'Description', isDense: true),
-                            maxLines: 2,
                             onChanged: (val) {
                               exp.description = val;
                               provider.updateExperience(index, exp);
                             },
+                            height: 120,
+                            placeholder: 'Describe your role and achievements...',
                           ),
                         ],
                       ),
@@ -831,7 +854,11 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
                 }),
                 const SizedBox(height: 8),
                 TextButton.icon(
-                  onPressed: () => provider.addExperience(Experience()),
+                  onPressed: () {
+                    // Pre-clear any old controller that might have existed for this index if adding many
+                    _itemControllers.remove('exp_${list.length}')?.dispose();
+                    provider.addExperience(Experience());
+                  },
                   icon: const Icon(Icons.add),
                   label: const Text('Add Experience'),
                 ),
@@ -879,7 +906,10 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
                               IconButton(
                                 icon: const Icon(Icons.delete, color: Colors.red),
                                 visualDensity: VisualDensity.compact,
-                                onPressed: () => provider.removeInternship(index),
+                                onPressed: () {
+                                  _itemControllers.remove('int_$index')?.dispose();
+                                  provider.removeInternship(index);
+                                },
                               ),
                             ],
                           ),
@@ -927,14 +957,17 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
                             ],
                           ),
                           const SizedBox(height: 8),
-                          TextFormField(
+                          const Text('Description', style: TextStyle(fontSize: 11, color: Colors.blueGrey, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          _buildQuillEditor(
+                            id: 'int_$index',
                             initialValue: internship.description,
-                            decoration: const InputDecoration(labelText: 'Description', isDense: true),
-                            maxLines: 2,
                             onChanged: (val) {
                               internship.description = val;
                               provider.updateInternship(index, internship);
                             },
+                            height: 120,
+                            placeholder: 'Describe your internship...',
                           ),
                         ],
                       ),
@@ -943,7 +976,10 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
                 }),
                 const SizedBox(height: 8),
                 TextButton.icon(
-                  onPressed: () => provider.addInternship(Internship()),
+                  onPressed: () {
+                    _itemControllers.remove('int_${list.length}')?.dispose();
+                    provider.addInternship(Internship());
+                  },
                   icon: const Icon(Icons.add),
                   label: const Text('Add Internship'),
                 ),
@@ -1104,7 +1140,10 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
                               IconButton(
                                 icon: const Icon(Icons.delete, color: Colors.red),
                                 visualDensity: VisualDensity.compact,
-                                onPressed: () => provider.removeEducation(index),
+                                onPressed: () {
+                                  _itemControllers.remove('edu_$index')?.dispose();
+                                  provider.removeEducation(index);
+                                },
                               ),
                             ],
                           ),
@@ -1152,14 +1191,17 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
                             ],
                           ),
                           const SizedBox(height: 8),
-                          TextFormField(
+                          const Text('Description', style: TextStyle(fontSize: 11, color: Colors.blueGrey, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          _buildQuillEditor(
+                            id: 'edu_$index',
                             initialValue: ed.description,
-                            decoration: const InputDecoration(labelText: 'Description', isDense: true),
-                            maxLines: 2,
                             onChanged: (val) {
                               ed.description = val;
                               provider.updateEducation(index, ed);
                             },
+                            height: 120,
+                            placeholder: 'Describe your studies...',
                           ),
                         ],
                       ),
@@ -1168,7 +1210,10 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
                 }),
                 const SizedBox(height: 8),
                 TextButton.icon(
-                  onPressed: () => provider.addEducation(Education()),
+                  onPressed: () {
+                    _itemControllers.remove('edu_${list.length}')?.dispose();
+                    provider.addEducation(Education());
+                  },
                   icon: const Icon(Icons.add),
                   label: const Text('Add Education'),
                 ),
@@ -1275,7 +1320,10 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
                               IconButton(
                                 icon: const Icon(Icons.delete, color: Colors.red),
                                 visualDensity: VisualDensity.compact,
-                                onPressed: () => provider.removeCertification(index),
+                                onPressed: () {
+                                  _itemControllers.remove('cert_$index')?.dispose();
+                                  provider.removeCertification(index);
+                                },
                               ),
                             ],
                           ),
@@ -1326,14 +1374,17 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
                             ],
                           ),
                           const SizedBox(height: 8),
-                          TextFormField(
+                          const Text('Description (Optional)', style: TextStyle(fontSize: 11, color: Colors.blueGrey, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          _buildQuillEditor(
+                            id: 'cert_$index',
                             initialValue: cert.description,
-                            decoration: const InputDecoration(labelText: 'Description (Optional)', isDense: true),
-                            maxLines: 2,
                             onChanged: (val) {
                               cert.description = val;
                               provider.updateCertification(index, cert);
                             },
+                            height: 100,
+                            placeholder: 'Additional details...',
                           ),
                         ],
                       ),
@@ -1342,7 +1393,10 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
                 }),
                 const SizedBox(height: 8),
                 TextButton.icon(
-                  onPressed: () => provider.addCertification(Certification()),
+                  onPressed: () {
+                    _itemControllers.remove('cert_${list.length}')?.dispose();
+                    provider.addCertification(Certification());
+                  },
                   icon: const Icon(Icons.add),
                   label: const Text('Add Certification'),
                 ),
@@ -1487,7 +1541,31 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
                   ),
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 12),
+              // Prominent Download Icon
+              IconButton(
+                icon: const Icon(Icons.file_download, size: 22, color: Colors.blue),
+                tooltip: 'Download CV',
+                onPressed: () async {
+                  final bytes = await PDFService.generateCV(_previewData);
+                  await Printing.sharePdf(bytes: bytes, filename: 'SmartCV_${DateTime.now().millisecondsSinceEpoch}.pdf');
+                },
+              ),
+              // Prominent Print Icon
+              IconButton(
+                icon: const Icon(Icons.print, size: 22, color: Colors.blueGrey),
+                tooltip: 'Print CV',
+                onPressed: () async {
+                  final bytes = await PDFService.generateCV(_previewData);
+                  await Printing.layoutPdf(onLayout: (format) => bytes, name: 'SmartCV_${DateTime.now().millisecondsSinceEpoch}');
+                },
+              ),
+              // Color Picker Icon
+              IconButton(
+                icon: const Icon(Icons.palette, size: 22, color: Colors.indigo),
+                tooltip: 'Title Color',
+                onPressed: () => _showColorPicker(context),
+              ),
               IconButton(
                 icon: const Icon(Icons.fullscreen, size: 20, color: Colors.blueGrey),
                 tooltip: 'Full Screen',
@@ -1507,14 +1585,50 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
         Expanded(
           child: PdfPreview(
             build: (format) => PDFService.generateCV(_previewData),
-            allowSharing: true,
-            allowPrinting: true,
+            allowSharing: false, // Hidden to use our own custom icon
+            allowPrinting: false, // User requested to remove print
             canChangeOrientation: false,
             canChangePageFormat: false,
             canDebug: false,
           ),
         ),
       ],
+    );
+  }
+
+  void _showColorPicker(BuildContext context) {
+    final provider = context.read<CVProvider>();
+    Color pickerColor = Color(int.parse(provider.cvData.primaryColorHex.replaceFirst('#', '0xff')));
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Pick Title Color'),
+          content: SingleChildScrollView(
+            child: ColorPicker(
+              pickerColor: pickerColor,
+              onColorChanged: (color) {
+                pickerColor = color;
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            ElevatedButton(
+              child: const Text('Apply'),
+              onPressed: () {
+                final hex = '#${pickerColor.value.toRadixString(16).padLeft(8, '0').substring(2)}';
+                provider.updatePrimaryColor(hex);
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 

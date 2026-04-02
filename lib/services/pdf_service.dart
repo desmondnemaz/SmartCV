@@ -23,10 +23,10 @@ class PDFService {
   static Map<String, double> _calculateFontSizes(double x) {
     return {
       'body': x,
-      'sectionTitle': x + 6,
-      'headerTitle': x * 2.2,
-      'headerJobTitle': x + 4,
-      'itemTitle': x + 4,
+      'sectionTitle': x + 2,
+      'headerTitle': x * 2,
+      'headerJobTitle': x + 2,
+      'itemTitle': x + 2,
       'itemText': x + 1,
       'fieldLabel': x - 1,
       'fieldValue': x - 1,
@@ -52,9 +52,11 @@ class PDFService {
         build: (pw.Context context) {
           final sizes = _calculateFontSizes(data.baseFontSize);
           final lh = data.lineHeight;
+          final primaryColor = PdfColor.fromInt(int.parse(data.primaryColorHex.replaceFirst('#', '0xff')));
+          
           final List<pw.Widget> content = [
             pw.SizedBox(height: 10), // Additional top safe area for mobile printing
-            _buildHeader(data.personalInfo, sizes, lh),
+            _buildHeader(data.personalInfo, sizes, lh, primaryColor),
             pw.SizedBox(height: CVTheme.lineSpacing * lh),
           ];
 
@@ -64,7 +66,7 @@ class PDFService {
               if (customIndex != -1) {
                 final custom = data.customSections[customIndex];
                 if (custom.isVisible && custom.description.isNotEmpty) {
-                  content.add(_buildSectionTitle(custom.title, sizes, lh));
+                  content.add(_buildSectionTitle(custom.title, sizes, lh, primaryColor));
                   // Render rich text (Quill Delta JSON) to PDF
                   content.addAll(_buildRichText(custom.description, _fontRegular!, _fontBold!, _fontItalic!, _fontBoldItalic!, sizes['body']!, lh));
                   content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
@@ -76,55 +78,55 @@ class PDFService {
             switch (sectionKey) {
               case 'personalInfo':
                 if (data.sectionTitles.showPersonalInfo) {
-                  content.add(_buildContactInfo(data.personalInfo, data.sectionTitles.personalInfo, sizes, lh));
+                  content.add(_buildContactInfo(data.personalInfo, data.sectionTitles.personalInfo, sizes, lh, primaryColor));
                   content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
                 break;
               case 'professionalSummary':
                 if (data.sectionTitles.showProfessionalSummary && data.personalInfo.profileSummary.isNotEmpty) {
-                  content.add(_buildSectionTitle(data.sectionTitles.professionalSummary, sizes, lh));
+                  content.add(_buildSectionTitle(data.sectionTitles.professionalSummary, sizes, lh, primaryColor));
                   content.addAll(_buildRichText(data.personalInfo.profileSummary, _fontRegular!, _fontBold!, _fontItalic!, _fontBoldItalic!, sizes['body']!, lh));
                   content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
                 break;
               case 'experience':
                 if (data.sectionTitles.showExperience && data.experience.isNotEmpty) {
-                  content.add(_buildSectionTitle(data.sectionTitles.experience, sizes, lh));
+                  content.add(_buildSectionTitle(data.sectionTitles.experience, sizes, lh, primaryColor));
                   content.addAll(data.experience.map((e) => _buildExperienceItem(e, sizes, lh)));
                   content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
                 break;
               case 'internships':
                 if (data.sectionTitles.showInternships && data.internships.isNotEmpty) {
-                  content.add(_buildSectionTitle(data.sectionTitles.internships, sizes, lh));
+                  content.add(_buildSectionTitle(data.sectionTitles.internships, sizes, lh, primaryColor));
                   content.addAll(data.internships.map((e) => _buildInternshipItem(e, sizes, lh)));
                   content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
                 break;
               case 'education':
                 if (data.sectionTitles.showEducation && data.education.isNotEmpty) {
-                  content.add(_buildSectionTitle(data.sectionTitles.education, sizes, lh));
+                  content.add(_buildSectionTitle(data.sectionTitles.education, sizes, lh, primaryColor));
                   content.addAll(data.education.map((e) => _buildEducationItem(e, sizes, lh)));
                   content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
                 break;
               case 'skills':
                 if (data.sectionTitles.showSkills && data.skills.isNotEmpty) {
-                  content.add(_buildSectionTitle(data.sectionTitles.skills, sizes, lh));
+                  content.add(_buildSectionTitle(data.sectionTitles.skills, sizes, lh, primaryColor));
                   content.add(_buildSkillsList(data.skills, sizes['body']!, lh));
                   content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
                 break;
               case 'certifications':
                 if (data.sectionTitles.showCertifications && data.certifications.isNotEmpty) {
-                  content.add(_buildSectionTitle(data.sectionTitles.certifications, sizes, lh));
+                  content.add(_buildSectionTitle(data.sectionTitles.certifications, sizes, lh, primaryColor));
                   content.addAll(data.certifications.map((c) => _buildCertificationItem(c, sizes, lh)));
                   content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
                 break;
               case 'references':
                 if (data.sectionTitles.showReferences && data.references.isNotEmpty) {
-                  content.add(_buildSectionTitle(data.sectionTitles.references, sizes, lh));
+                  content.add(_buildSectionTitle(data.sectionTitles.references, sizes, lh, primaryColor));
                   content.addAll(data.references.map((r) => _buildReferenceItem(r, sizes, lh)));
                   content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
@@ -140,7 +142,7 @@ class PDFService {
     return pdf.save();
   }
 
-  static pw.Widget _buildHeader(PersonalInfo info, Map<String, double> sizes, double lh) {
+  static pw.Widget _buildHeader(PersonalInfo info, Map<String, double> sizes, double lh, PdfColor primaryColor) {
     if (info.fields.isEmpty && info.jobTitle.isEmpty) return pw.SizedBox();
 
     pw.CrossAxisAlignment titleAlign;
@@ -169,7 +171,7 @@ class PDFService {
                 style: pw.TextStyle(
                   fontSize: sizes['headerTitle'],
                   fontWeight: pw.FontWeight.bold,
-                  color: CVTheme.primaryColor,
+                  color: primaryColor,
                   letterSpacing: 2,
                   lineSpacing: sizes['headerTitle']! * (lh - 1.0),
                 ),
@@ -180,8 +182,7 @@ class PDFService {
                   info.jobTitle.toUpperCase(),
                   style: pw.TextStyle(
                     fontSize: sizes['headerJobTitle'],
-                    fontWeight: pw.FontWeight.bold,
-                    color: CVTheme.secondaryColor,
+                    color: primaryColor,
                     lineSpacing: sizes['headerJobTitle']! * (lh - 1.0),
                   ),
                 ),
@@ -190,22 +191,22 @@ class PDFService {
           ),
         ),
         pw.SizedBox(height: CVTheme.headerAfterDividerSpacing * lh),
-        pw.Divider(color: CVTheme.primaryColor, thickness: CVTheme.headerDividerThickness),
+        pw.Divider(color: primaryColor, thickness: CVTheme.headerDividerThickness),
       ],
     );
   }
 
-  static pw.Widget _buildContactInfo(PersonalInfo info, String title, Map<String, double> sizes, double lh) {
+  static pw.Widget _buildContactInfo(PersonalInfo info, String title, Map<String, double> sizes, double lh, PdfColor primaryColor) {
     List<CVField> infoFields = info.fields.where((f) => f.value.isNotEmpty).toList();
     if (info.showNameAsHeader) {
-      infoFields = infoFields.where((f) => f.title != 'Full Name').toList();
+      infoFields = infoFields.where((f) => f.title != 'Name').toList();
     }
     if (infoFields.isEmpty) return pw.SizedBox();
 
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle(title, sizes, lh),
+        _buildSectionTitle(title, sizes, lh, primaryColor),
         ...infoFields.map((field) {
           return pw.Padding(
             padding: pw.EdgeInsets.only(bottom: CVTheme.fieldPaddingBottom * lh),
@@ -243,7 +244,7 @@ class PDFService {
     );
   }
 
-  static pw.Widget _buildSectionTitle(String title, Map<String, double> sizes, double lh) {
+  static pw.Widget _buildSectionTitle(String title, Map<String, double> sizes, double lh, PdfColor primaryColor) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -252,13 +253,13 @@ class PDFService {
           style: pw.TextStyle(
             fontSize: sizes['sectionTitle'],
             fontWeight: pw.FontWeight.bold,
-            color: CVTheme.accentColor,
+            color: primaryColor,
             lineSpacing: sizes['sectionTitle']! * (lh - 1.0),
           ),
         ),
-        pw.SizedBox(height: 2 * lh),
+        pw.SizedBox(height: 1 * lh),
         pw.Divider(color: CVTheme.dividerColor, thickness: CVTheme.sectionDividerThickness),
-        pw.SizedBox(height: 4 * lh),
+        pw.SizedBox(height: 2 * lh),
       ],
     );
   }
@@ -300,10 +301,7 @@ class PDFService {
             ),
           ),
           pw.SizedBox(height: 4 * lh),
-          pw.Text(exp.description, style: pw.TextStyle(
-            fontSize: sizes['body'],
-            lineSpacing: sizes['body']! * (lh - 1.0),
-          )),
+          ..._buildRichText(exp.description, _fontRegular!, _fontBold!, _fontItalic!, _fontBoldItalic!, sizes['body']!, lh),
         ],
       ),
     );
@@ -346,10 +344,7 @@ class PDFService {
             ),
           ),
           pw.SizedBox(height: 4 * lh),
-          pw.Text(internship.description, style: pw.TextStyle(
-            fontSize: sizes['body'],
-            lineSpacing: sizes['body']! * (lh - 1.0),
-          )),
+          ..._buildRichText(internship.description, _fontRegular!, _fontBold!, _fontItalic!, _fontBoldItalic!, sizes['body']!, lh),
         ],
       ),
     );
@@ -393,10 +388,7 @@ class PDFService {
           ),
           if (ed.description.isNotEmpty) ...[
             pw.SizedBox(height: 4 * lh),
-            pw.Text(ed.description, style: pw.TextStyle(
-              fontSize: sizes['body'],
-              lineSpacing: sizes['body']! * (lh - 1.0),
-            )),
+            ..._buildRichText(ed.description, _fontRegular!, _fontBold!, _fontItalic!, _fontBoldItalic!, sizes['body']!, lh),
           ]
         ],
       ),
@@ -477,10 +469,7 @@ class PDFService {
           ),
           if (cert.description.isNotEmpty) ...[
             pw.SizedBox(height: 4 * lh),
-            pw.Text(cert.description, style: pw.TextStyle(
-              fontSize: sizes['body'],
-              lineSpacing: sizes['body']! * (lh - 1.0),
-            )),
+            ..._buildRichText(cert.description, _fontRegular!, _fontBold!, _fontItalic!, _fontBoldItalic!, sizes['body']!, lh),
           ]
         ],
       ),
