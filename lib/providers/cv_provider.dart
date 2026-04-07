@@ -175,6 +175,7 @@ class CVProvider with ChangeNotifier {
   }
   
   void updateLineHeight(double height) {
+    _cvData.lineHeight = height;
     notifyListeners();
   }
 

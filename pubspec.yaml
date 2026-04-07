@@ -73,23 +73,33 @@ flutter:
     - assets/fonts/
 
   fonts:
-    - family: Roboto
+    - family: BundledRoboto
       fonts:
         - asset: assets/fonts/Roboto-Regular.ttf
         - asset: assets/fonts/Roboto-Bold.ttf
           weight: 700
         - asset: assets/fonts/Roboto-Italic.ttf
           style: italic
-    - family: Poppins
+    - family: BundledPoppins
       fonts:
         - asset: assets/fonts/Poppins-Regular.ttf
         - asset: assets/fonts/Poppins-Bold.ttf
           weight: 700
-    - family: EBGaramond
+    - family: BundledGaramond
       fonts:
         - asset: assets/fonts/EBGaramond-Regular.ttf
         - asset: assets/fonts/EBGaramond-Bold.ttf
           weight: 700
+    - family: BundledTinos
+      fonts:
+        - asset: assets/fonts/Tinos-Regular.ttf
+        - asset: assets/fonts/Tinos-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Tinos-Italic.ttf
+          style: italic
+        - asset: assets/fonts/Tinos-BoldItalic.ttf
+          weight: 700
+          style: italic
 
 flutter_launcher_icons:
   android: "launcher_icon"

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   static ThemeData get lightTheme => _createTheme(Brightness.light);
@@ -25,6 +24,9 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
+      // Setting Poppins as the default font family for the application UI.
+      // This font is bundled in assets/fonts/ to ensure instant loading.
+      fontFamily: 'Poppins',
       scaffoldBackgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F5),
       
       appBarTheme: AppBarTheme(
@@ -32,7 +34,9 @@ class AppTheme {
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: GoogleFonts.poppins(
+        // Using explicit TextStyle with bundled fontFamily for immediate rendering.
+        titleTextStyle: const TextStyle(
+          fontFamily: 'Poppins',
           fontSize: 20,
           fontWeight: FontWeight.bold,
           color: Colors.white,
@@ -70,15 +74,25 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Color(0xFF2196F3), width: 2),
         ),
-        labelStyle: GoogleFonts.poppins(color: isDark ? Colors.grey.shade400 : const Color(0xFF757575)),
-        hintStyle: GoogleFonts.poppins(color: isDark ? Colors.grey.shade600 : const Color(0xFFBDBDBD)),
+        labelStyle: TextStyle(
+          fontFamily: 'Poppins',
+          color: isDark ? Colors.grey.shade400 : const Color(0xFF757575),
+        ),
+        hintStyle: TextStyle(
+          fontFamily: 'Poppins',
+          color: isDark ? Colors.grey.shade600 : const Color(0xFFBDBDBD),
+        ),
       ),
 
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF2196F3),
           foregroundColor: Colors.white,
-          textStyle: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
+          textStyle: const TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 16, 
+            fontWeight: FontWeight.w600,
+          ),
           padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
           elevation: isDark ? 0 : 2,
           shape: const RoundedRectangleBorder(
@@ -88,19 +102,28 @@ class AppTheme {
       ),
 
       textTheme: TextTheme(
-        headlineMedium: GoogleFonts.poppins(
+        // headlineMedium used for large banners or major section headers.
+        headlineMedium: TextStyle(
+          fontFamily: 'Poppins',
           fontWeight: FontWeight.bold,
           color: isDark ? const Color(0xFF64B5F6) : const Color(0xFF2196F3),
         ),
-        titleMedium: GoogleFonts.poppins(
+        // titleMedium used for section tile headers (e.g., ExpansionTile titles).
+        titleMedium: TextStyle(
+          fontFamily: 'Poppins',
           fontWeight: FontWeight.w600,
           color: isDark ? Colors.white : const Color(0xFF212121),
         ),
-        bodyMedium: GoogleFonts.roboto(
+        // bodyMedium used for most standard text fields and descriptors.
+        // Using Roboto for body text for better readability.
+        bodyMedium: TextStyle(
+          fontFamily: 'Roboto',
           color: isDark ? Colors.grey.shade300 : const Color(0xFF212121),
           fontSize: 15,
         ),
-        bodySmall: GoogleFonts.roboto(
+        // bodySmall used for subtitles or less prominent info.
+        bodySmall: TextStyle(
+          fontFamily: 'Roboto',
           color: isDark ? Colors.grey.shade400 : const Color(0xFF757575),
           fontSize: 13,
         ),

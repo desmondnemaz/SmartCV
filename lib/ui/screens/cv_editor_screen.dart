@@ -1475,160 +1475,192 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          height: 50,
           color: Colors.grey.shade50,
-          child: Row(
-            children: [
-              PopupMenuButton<double>(
-                icon: const Icon(Icons.format_line_spacing, size: 18, color: Colors.blueGrey),
-                tooltip: 'Line Height',
-                onSelected: (val) {
-                  context.read<CVProvider>().updateLineHeight(val);
-                },
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                    enabled: false,
-                    child: Text('LINE HEIGHT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
-                  ),
-                  _buildLineHeightItem(1.0, '1', widget.data.lineHeight),
-                  _buildLineHeightItem(1.15, '1.15', widget.data.lineHeight),
-                  _buildLineHeightItem(1.25, '1.25', widget.data.lineHeight),
-                  _buildLineHeightItem(1.5, '1.5', widget.data.lineHeight),
-                  _buildLineHeightItem(2.0, '2', widget.data.lineHeight),
-                ],
-              ),
-              const VerticalDivider(width: 20, indent: 8, endIndent: 8),
-              const Icon(Icons.format_size, size: 18, color: Colors.blueGrey),
-              const SizedBox(width: 12),
-              const Text(
-                'Font Size',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blueGrey,
-                ),
-              ),
-              Expanded(
-                child: SliderTheme(
-                  data: SliderTheme.of(context).copyWith(
-                    trackHeight: 2,
-                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
-                  ),
-                  child: Slider(
-                    value: widget.data.baseFontSize.clamp(10, 14),
-                    min: 10,
-                    max: 14,
-                    divisions: 4,
-                    label: widget.data.baseFontSize.round().toString(),
-                    onChanged: (val) {
-                      context.read<CVProvider>().updateBaseFontSize(val);
-                    },
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.blueGrey.shade100,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  widget.data.baseFontSize.round().toString(),
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blueGrey,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              PopupMenuButton<String>(
-                offset: const Offset(0, 40),
-                tooltip: 'Select Font',
-                icon: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.blue.shade100),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Aa',
-                        style: GoogleFonts.getFont(widget.data.fontFamily,
-                            fontSize: 14, fontWeight: FontWeight.bold, color: Colors.blue.shade800),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(Icons.keyboard_arrow_up, size: 14, color: Colors.blue.shade800),
-                    ],
-                  ),
-                ),
-                onSelected: (val) {
-                  context.read<CVProvider>().updateFontFamily(val);
-                },
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                    enabled: false,
-                    child: Text('FONT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
-                  ),
-                  ...[
-                    {'name': 'Arimo', 'label': 'Arial'},
-                    {'name': 'Carlito', 'label': 'Calibri'},
-                    {'name': 'Courier Prime', 'label': 'Courier New'},
-                    {'name': 'Open Sans', 'label': 'DejaVu Sans'},
-                    {'name': 'Noto Serif', 'label': 'Garamond'},
-                    {'name': 'Gelasio', 'label': 'Georgia'},
-                    {'name': 'Roboto', 'label': 'Helvetica'},
-                    {'name': 'Lato', 'label': 'Lato'},
-                    {'name': 'Noto Sans', 'label': 'Noto Sans'},
-                    {'name': 'Noto Serif', 'label': 'Noto Serif'},
-                    {'name': 'Poppins', 'label': 'Poppins'},
-                    {'name': 'Tinos', 'label': 'Times New Roman'},
-                    {'name': 'Source Sans 3', 'label': 'Trebuchet'},
-                  ].map((f) => _buildFontItem(f['name']!, f['label']!, widget.data.fontFamily)),
-                ],
-              ),
-              const SizedBox(width: 12),
-              // Prominent Download Icon
-              IconButton(
-                icon: const Icon(Icons.file_download, size: 22, color: Colors.blue),
-                tooltip: 'Download CV',
-                onPressed: () async {
-                  final bytes = await PDFService.generateCV(_previewData);
-                  await Printing.sharePdf(bytes: bytes, filename: 'SmartCV_${DateTime.now().millisecondsSinceEpoch}.pdf');
-                },
-              ),
-              // Prominent Print Icon
-              IconButton(
-                icon: const Icon(Icons.print, size: 22, color: Colors.blueGrey),
-                tooltip: 'Print CV',
-                onPressed: () async {
-                  final bytes = await PDFService.generateCV(_previewData);
-                  await Printing.layoutPdf(onLayout: (format) => bytes, name: 'SmartCV_${DateTime.now().millisecondsSinceEpoch}');
-                },
-              ),
-              // Color Picker Icon
-              IconButton(
-                icon: const Icon(Icons.palette, size: 22, color: Colors.indigo),
-                tooltip: 'Title Color',
-                onPressed: () => _showColorPicker(context),
-              ),
-              IconButton(
-                icon: const Icon(Icons.fullscreen, size: 20, color: Colors.blueGrey),
-                tooltip: 'Full Screen',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => FullScreenPreview(data: widget.data),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                PopupMenuButton<double>(
+                  padding: EdgeInsets.zero,
+                  icon: const Icon(Icons.format_line_spacing, size: 18, color: Colors.blueGrey),
+                  tooltip: 'Line Height',
+                  onSelected: (val) {
+                    context.read<CVProvider>().updateLineHeight(val);
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      enabled: false,
+                      child: Text('LINE HEIGHT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
                     ),
-                  );
-                },
-              ),
-            ],
+                    _buildLineHeightItem(1.0, '1', widget.data.lineHeight),
+                    _buildLineHeightItem(1.15, '1.15', widget.data.lineHeight),
+                    _buildLineHeightItem(1.25, '1.25', widget.data.lineHeight),
+                    _buildLineHeightItem(1.5, '1.5', widget.data.lineHeight),
+                    _buildLineHeightItem(2.0, '2', widget.data.lineHeight),
+                  ],
+                ),
+                Container(height: 24, width: 1, color: Colors.grey.shade300, margin: const EdgeInsets.symmetric(horizontal: 8)),
+                PopupMenuButton<double>(
+                  offset: const Offset(0, 40),
+                  tooltip: 'Font Size',
+                  icon: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.blueGrey.shade50,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.blueGrey.shade100),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.format_size, size: 14, color: Colors.blueGrey),
+                        const SizedBox(width: 4),
+                        Text(
+                          widget.data.baseFontSize.round().toString(),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blueGrey,
+                          ),
+                        ),
+                        const Icon(Icons.keyboard_arrow_down, size: 12, color: Colors.blueGrey),
+                      ],
+                    ),
+                  ),
+                  onSelected: (val) {
+                    context.read<CVProvider>().updateBaseFontSize(val);
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      enabled: false,
+                      child: Text('FONT SIZE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
+                    ),
+                    _buildFontSizeItem(10.0, '10', widget.data.baseFontSize),
+                    _buildFontSizeItem(11.0, '11', widget.data.baseFontSize),
+                    _buildFontSizeItem(12.0, '12', widget.data.baseFontSize),
+                    _buildFontSizeItem(13.0, '13', widget.data.baseFontSize),
+                    _buildFontSizeItem(14.0, '14', widget.data.baseFontSize),
+                  ],
+                ),
+                const SizedBox(width: 8),
+                PopupMenuButton<String>(
+                  offset: const Offset(0, 40),
+                  tooltip: 'Select Font',
+                  icon: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.blue.shade100),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Aa',
+                          style: _getFontItemStyle(widget.data.fontFamily).copyWith(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue.shade800,
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        Icon(Icons.keyboard_arrow_down, size: 12, color: Colors.blue.shade800),
+                      ],
+                    ),
+                  ),
+                  onSelected: (val) {
+                    context.read<CVProvider>().updateFontFamily(val);
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      enabled: false,
+                      child: Text('FONT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
+                    ),
+                    ...[
+                      // Bundled (Offline Safe)
+                      const PopupMenuItem<String>(
+                        enabled: false,
+                        child: Text('BUNDLED (OFFLINE SAFE)', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.blue)),
+                      ),
+                      {'name': 'BundledRoboto', 'label': 'Roboto'},
+                      {'name': 'BundledPoppins', 'label': 'Poppins'},
+                      {'name': 'BundledGaramond', 'label': 'Garamond'},
+                      {'name': 'BundledTinos', 'label': 'Times New Roman'},
+
+                      // Online Alternatives
+                      const PopupMenuDivider(),
+                      const PopupMenuItem<String>(
+                        enabled: false,
+                        child: Text('ONLINE ALTERNATIVES', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.orange)),
+                      ),
+                      {'name': 'Arimo', 'label': 'Arial'},
+                      {'name': 'Carlito', 'label': 'Calibri'},
+                      {'name': 'Courier Prime', 'label': 'Courier New'},
+                      {'name': 'Open Sans', 'label': 'DejaVu Sans'},
+                      {'name': 'Gelasio', 'label': 'Georgia'},
+                      {'name': 'Lato', 'label': 'Lato'},
+                      {'name': 'Noto Sans', 'label': 'Noto Sans'},
+                      {'name': 'Noto Serif', 'label': 'Noto Serif'},
+                      {'name': 'Source Sans 3', 'label': 'Trebuchet'},
+                    ].map<PopupMenuEntry<String>>((f) {
+                      if (f is PopupMenuEntry<String>) return f;
+                      if (f is PopupMenuEntry) return f as PopupMenuEntry<String>; // Cast if generic is different but item is valid entry
+                      final map = f as Map<String, String>;
+                      return _buildFontItem(map['name']!, map['label']!, widget.data.fontFamily);
+                    }),
+                  ],
+                ),
+                Container(height: 24, width: 1, color: Colors.grey.shade300, margin: const EdgeInsets.symmetric(horizontal: 8)),
+                // Action Icons
+                IconButton(
+                  icon: const Icon(Icons.file_download, size: 20, color: Colors.blue),
+                  tooltip: 'Download CV',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () async {
+                    final bytes = await PDFService.generateCV(_previewData);
+                    await Printing.sharePdf(bytes: bytes, filename: 'SmartCV_${DateTime.now().millisecondsSinceEpoch}.pdf');
+                  },
+                ),
+                const SizedBox(width: 12),
+                IconButton(
+                  icon: const Icon(Icons.print, size: 20, color: Colors.blueGrey),
+                  tooltip: 'Print CV',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () async {
+                    final bytes = await PDFService.generateCV(_previewData);
+                    await Printing.layoutPdf(onLayout: (format) => bytes, name: 'SmartCV_${DateTime.now().millisecondsSinceEpoch}');
+                  },
+                ),
+                const SizedBox(width: 12),
+                IconButton(
+                  icon: const Icon(Icons.palette, size: 20, color: Colors.indigo),
+                  tooltip: 'Title Color',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () => _showColorPicker(context),
+                ),
+                const SizedBox(width: 12),
+                IconButton(
+                  icon: const Icon(Icons.fullscreen, size: 20, color: Colors.blueGrey),
+                  tooltip: 'Full Screen',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => FullScreenPreview(data: widget.data),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ),
         const Divider(height: 1),
@@ -1671,7 +1703,7 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
             ElevatedButton(
               child: const Text('Apply'),
               onPressed: () {
-                final hex = '#${pickerColor.value.toRadixString(16).padLeft(8, '0').substring(2)}';
+                final hex = '#${pickerColor.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}';
                 provider.updatePrimaryColor(hex);
                 Navigator.of(context).pop();
               },
@@ -1694,7 +1726,7 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
           Expanded(
             child: Text(
               label,
-              style: GoogleFonts.getFont(value, fontSize: 13),
+              style: _getFontItemStyle(value),
             ),
           ),
         ],
@@ -1702,7 +1734,37 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
     );
   }
 
+  TextStyle _getFontItemStyle(String value) {
+    if (value == 'BundledRoboto' || value == 'BundledPoppins' || value == 'BundledGaramond' || value == 'BundledTinos' ||
+        value == 'Roboto' || value == 'Poppins' || value == 'EBGaramond' || value == 'Tinos') {
+      // Use the mapped internal name if available
+      String family = value;
+      if (value == 'Roboto') family = 'BundledRoboto';
+      if (value == 'Poppins') family = 'BundledPoppins';
+      if (value == 'EBGaramond') family = 'BundledGaramond';
+      if (value == 'Tinos') family = 'BundledTinos';
+      
+      return TextStyle(fontFamily: family, fontSize: 13);
+    }
+    return GoogleFonts.getFont(value, fontSize: 13);
+  }
+
   PopupMenuItem<double> _buildLineHeightItem(double value, String label, double current) {
+    return PopupMenuItem<double>(
+      value: value,
+      child: Row(
+        children: [
+          SizedBox(
+            width: 24,
+            child: current == value ? const Icon(Icons.check, size: 16) : null,
+          ),
+          Text(label),
+        ],
+      ),
+    );
+  }
+
+  PopupMenuItem<double> _buildFontSizeItem(double value, String label, double current) {
     return PopupMenuItem<double>(
       value: value,
       child: Row(
