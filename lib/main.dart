@@ -9,7 +9,7 @@ import 'providers/cv_provider.dart';
 import 'providers/theme_provider.dart';
 import 'ui/screens/home_screen.dart';
 
-void main() {
+void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
@@ -23,10 +23,13 @@ void main() {
     ),
   );
 
-  // We can remove the splash screen immediately after runApp starts building the tree,
-  // or after actual initialization if needed.
-  FlutterNativeSplash.remove();
+  // Use addPostFrameCallback to ensure the splash screen is removed only after
+  // the first frame is rendered. This is more robust than calling it immediately.
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    FlutterNativeSplash.remove();
+  });
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

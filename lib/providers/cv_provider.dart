@@ -189,6 +189,12 @@ class CVProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void updatePdfFileName(String name) {
+    _cvData.pdfFileName = name.replaceAll(RegExp(r'[^\w\s\-]'), '_');
+    notifyListeners();
+  }
+
+
   // Clear all data
   void clearAll() {
     _cvData = CVData();

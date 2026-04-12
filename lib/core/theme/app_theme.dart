@@ -26,7 +26,7 @@ class AppTheme {
       colorScheme: colorScheme,
       // Setting Poppins as the default font family for the application UI.
       // This font is bundled in assets/fonts/ to ensure instant loading.
-      fontFamily: 'Poppins',
+      fontFamily: 'BundledPoppins',
       scaffoldBackgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F5),
       
       appBarTheme: AppBarTheme(
@@ -36,7 +36,7 @@ class AppTheme {
         centerTitle: true,
         // Using explicit TextStyle with bundled fontFamily for immediate rendering.
         titleTextStyle: const TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'BundledPoppins',
           fontSize: 20,
           fontWeight: FontWeight.bold,
           color: Colors.white,
@@ -75,11 +75,11 @@ class AppTheme {
           borderSide: const BorderSide(color: Color(0xFF2196F3), width: 2),
         ),
         labelStyle: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'BundledPoppins',
           color: isDark ? Colors.grey.shade400 : const Color(0xFF757575),
         ),
         hintStyle: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'BundledPoppins',
           color: isDark ? Colors.grey.shade600 : const Color(0xFFBDBDBD),
         ),
       ),
@@ -89,7 +89,7 @@ class AppTheme {
           backgroundColor: const Color(0xFF2196F3),
           foregroundColor: Colors.white,
           textStyle: const TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: 'BundledPoppins',
             fontSize: 16, 
             fontWeight: FontWeight.w600,
           ),
@@ -104,26 +104,26 @@ class AppTheme {
       textTheme: TextTheme(
         // headlineMedium used for large banners or major section headers.
         headlineMedium: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'BundledPoppins',
           fontWeight: FontWeight.bold,
           color: isDark ? const Color(0xFF64B5F6) : const Color(0xFF2196F3),
         ),
         // titleMedium used for section tile headers (e.g., ExpansionTile titles).
         titleMedium: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'BundledPoppins',
           fontWeight: FontWeight.w600,
           color: isDark ? Colors.white : const Color(0xFF212121),
         ),
         // bodyMedium used for most standard text fields and descriptors.
         // Using Roboto for body text for better readability.
         bodyMedium: TextStyle(
-          fontFamily: 'Roboto',
+          fontFamily: 'BundledRoboto',
           color: isDark ? Colors.grey.shade300 : const Color(0xFF212121),
           fontSize: 15,
         ),
         // bodySmall used for subtitles or less prominent info.
         bodySmall: TextStyle(
-          fontFamily: 'Roboto',
+          fontFamily: 'BundledRoboto',
           color: isDark ? Colors.grey.shade400 : const Color(0xFF757575),
           fontSize: 13,
         ),

@@ -33,6 +33,10 @@
   
   
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+  
+  
+  
+  
   <style id="splash-screen-style">
     html {
       height: 100%
@@ -106,17 +110,25 @@
       <img class="center" aria-hidden="true" src="splash/img/light-1x.png" alt="">
   </picture>
   
+  
+  
   <script>
-    window.flutterWebRenderer = "html";
-    window.addEventListener('load', function(ev) {
-      _flutter.loader.loadEntrypoint({
-        onEntrypointLoaded: function(engineInitializer) {
-          engineInitializer.initializeEngine().then(function(appRunner) {
-            appRunner.runApp();
-          });
-        }
-      });
+  window.addEventListener('load', function(ev) {
+    // This ensures the loader is initialized before calling loadEntrypoint
+    _flutter.loader.loadEntrypoint({
+      serviceWorker: {
+        timeoutMillis: 4000,
+      },
+      onEntrypointLoaded: function(engineInitializer) {
+        engineInitializer.initializeEngine({
+          // Force the renderer here if you prefer, or let Flutter decide
+          useColorEmoji: true,
+        }).then(function(appRunner) {
+          appRunner.runApp();
+        });
+      }
     });
+  });
   </script>
 
 

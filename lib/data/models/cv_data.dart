@@ -190,6 +190,8 @@ class CVData {
   double lineHeight;
   String primaryColorHex;
   String fontFamily;
+  String pdfFileName;
+
 
   CVData({
     PersonalInfo? personalInfo,
@@ -206,7 +208,9 @@ class CVData {
     this.lineHeight = 1.0,
     this.primaryColorHex = '#0D47A1',
     this.fontFamily = 'Roboto',
+    this.pdfFileName = 'My_CV',
   })  : personalInfo = personalInfo ?? PersonalInfo(),
+
         sectionTitles = sectionTitles ?? SectionTitles(),
         education = education ?? [],
         experience = experience ?? [],

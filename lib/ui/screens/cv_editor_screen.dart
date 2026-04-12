@@ -303,21 +303,21 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
   }
 
   Widget _buildEditorForm() {
-    return Consumer<CVProvider>(
-      builder: (context, provider, child) {
-        final order = provider.cvData.sectionOrder;
-        return Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: _buildHeaderSection(),
-            ),
-            Expanded(
-              child: ReorderableListView(
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: _buildHeaderSection(),
+        ),
+        Expanded(
+          child: Selector<CVProvider, List<String>>(
+            selector: (context, provider) => List.from(provider.cvData.sectionOrder),
+            builder: (context, order, _) {
+              return ReorderableListView(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 buildDefaultDragHandles: false,
                 onReorder: (oldIndex, newIndex) {
-                  provider.reorderSections(oldIndex, newIndex);
+                  context.read<CVProvider>().reorderSections(oldIndex, newIndex);
                 },
                 children: [
                   for (int i = 0; i < order.length; i++)
@@ -337,27 +337,27 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
                     ),
                   const SizedBox(key: ValueKey('footerSpacer'), height: 32),
                 ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  final id = 'custom_${DateTime.now().millisecondsSinceEpoch}';
-                  provider.addCustomSection(
+              );
+            },
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: ElevatedButton.icon(
+            onPressed: () {
+              final id = 'custom_${DateTime.now().millisecondsSinceEpoch}';
+              context.read<CVProvider>().addCustomSection(
                     CustomSection(id: id),
                   );
-                },
-                icon: const Icon(Icons.add),
-                label: const Text('Add Custom Section'),
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 48),
-                ),
-              ),
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Add Custom Section'),
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 48),
             ),
-          ],
-        );
-      },
+          ),
+        ),
+      ],
     );
   }
 
@@ -380,60 +380,95 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
 
 
   Widget _buildHeaderSection() {
-    return ExpansionTile(
-      leading: const Icon(Icons.badge),
-      title: const Text('Header'),
-      childrenPadding: const EdgeInsets.all(16),
-      children: [
-        TextFormField(
-          controller: _jobTitleCtrl,
-          decoration: const InputDecoration(
-            labelText: 'Job Title / Professional Title',
-            hintText: 'e.g. Software Engineer',
-          ),
-        ),
-        const SizedBox(height: 16),
-        const Text('Header Alignment', style: TextStyle(fontSize: 12, color: Colors.blueGrey)),
-        const SizedBox(height: 8),
-        ToggleButtons(
-          isSelected: [
-            _headerAlignment == 'left',
-            _headerAlignment == 'center',
-            _headerAlignment == 'right',
+    return Selector<CVProvider, (String, String, bool)>(
+      selector: (_, p) => (p.cvData.personalInfo.jobTitle, p.cvData.personalInfo.headerAlignment, p.cvData.personalInfo.showNameAsHeader),
+      builder: (context, data, _) {
+        final jobTitle = data.$1;
+        final alignment = data.$2;
+        final showName = data.$3;
+
+        // Ensure controllers and state are in sync if they were changed externally
+        if (_jobTitleCtrl.text != jobTitle) {
+          _jobTitleCtrl.text = jobTitle;
+        }
+        _headerAlignment = alignment;
+        _showNameAsHeader = showName;
+
+        return ExpansionTile(
+          leading: const Icon(Icons.badge),
+          title: const Text('Header'),
+          childrenPadding: const EdgeInsets.all(16),
+          children: [
+            TextFormField(
+              controller: _jobTitleCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Job Title / Professional Title',
+                hintText: 'e.g. Software Engineer',
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text('Header Alignment', style: TextStyle(fontSize: 12, color: Colors.blueGrey)),
+            const SizedBox(height: 8),
+            ToggleButtons(
+              isSelected: [
+                _headerAlignment == 'left',
+                _headerAlignment == 'center',
+                _headerAlignment == 'right',
+              ],
+              onPressed: (index) {
+                setState(() {
+                  if (index == 0) _headerAlignment = 'left';
+                  if (index == 1) _headerAlignment = 'center';
+                  if (index == 2) _headerAlignment = 'right';
+                });
+                _updatePersonalInfo();
+              },
+              borderRadius: BorderRadius.circular(8),
+              constraints: const BoxConstraints(minHeight: 36, minWidth: 80),
+              children: const [
+                Icon(Icons.format_align_left, size: 20),
+                Icon(Icons.format_align_center, size: 20),
+                Icon(Icons.format_align_right, size: 20),
+              ],
+            ),
+            const SizedBox(height: 16),
+            CheckboxListTile(
+              title: const Text('Use Name as Header Title', style: TextStyle(fontSize: 14)),
+              subtitle: const Text('Replaces "CURRICULUM VITAE" with your name', style: TextStyle(fontSize: 12)),
+              value: _showNameAsHeader,
+              onChanged: (val) {
+                setState(() {
+                  _showNameAsHeader = val ?? false;
+                });
+                _updatePersonalInfo();
+              },
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              activeColor: Theme.of(context).primaryColor,
+              controlAffinity: ListTileControlAffinity.leading,
+            ),
+            const Divider(),
+            const SizedBox(height: 8),
+            Selector<CVProvider, String>(
+              selector: (_, p) => p.cvData.pdfFileName,
+              builder: (context, fileName, _) {
+                return TextFormField(
+                  initialValue: fileName,
+                  decoration: const InputDecoration(
+                    labelText: 'Export Filename (PDF)',
+                    hintText: 'e.g. My_CV',
+                    prefixIcon: Icon(Icons.file_present),
+                    isDense: true,
+                  ),
+                  onChanged: (val) {
+                    context.read<CVProvider>().updatePdfFileName(val);
+                  },
+                );
+              },
+            ),
           ],
-          onPressed: (index) {
-            setState(() {
-              if (index == 0) _headerAlignment = 'left';
-              if (index == 1) _headerAlignment = 'center';
-              if (index == 2) _headerAlignment = 'right';
-            });
-            _updatePersonalInfo();
-          },
-          borderRadius: BorderRadius.circular(8),
-          constraints: const BoxConstraints(minHeight: 36, minWidth: 80),
-          children: const [
-            Icon(Icons.format_align_left, size: 20),
-            Icon(Icons.format_align_center, size: 20),
-            Icon(Icons.format_align_right, size: 20),
-          ],
-        ),
-        const SizedBox(height: 16),
-        CheckboxListTile(
-          title: const Text('Use Name as Header Title', style: TextStyle(fontSize: 14)),
-          subtitle: const Text('Replaces "CURRICULUM VITAE" with your name', style: TextStyle(fontSize: 12)),
-          value: _showNameAsHeader,
-          onChanged: (val) {
-            setState(() {
-              _showNameAsHeader = val ?? false;
-            });
-            _updatePersonalInfo();
-          },
-          contentPadding: EdgeInsets.zero,
-          dense: true,
-          activeColor: Theme.of(context).primaryColor,
-          controlAffinity: ListTileControlAffinity.leading,
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -520,10 +555,12 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
   }
 
   Widget _buildPersonalInfoSection({Key? key}) {
-    return Consumer<CVProvider>(
+    return Selector<CVProvider, SectionTitles>(
       key: key,
-      builder: (context, provider, _) {
-        final titles = provider.cvData.sectionTitles;
+      selector: (_, p) => p.cvData.sectionTitles,
+      builder: (context, titles, _) {
+        final provider = context.read<CVProvider>();
+        
         return ExpansionTile(
           leading: const Icon(Icons.person),
           title: _buildSectionHeader(context, titles.personalInfo, titles.showPersonalInfo, (val) {
@@ -593,10 +630,11 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
   }
 
   Widget _buildProfessionalSummarySection({Key? key}) {
-    return Consumer<CVProvider>(
+    return Selector<CVProvider, SectionTitles>(
       key: key,
-      builder: (context, provider, _) {
-        final titles = provider.cvData.sectionTitles;
+      selector: (_, p) => p.cvData.sectionTitles,
+      builder: (context, titles, _) {
+        final provider = context.read<CVProvider>();
         return ExpansionTile(
           leading: const Icon(Icons.description),
           title: _buildSectionHeader(context, titles.professionalSummary, titles.showProfessionalSummary, (val) {
@@ -688,20 +726,24 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
   }
 
   Widget _buildCustomSection(String id) {
-    return Consumer<CVProvider>(
+    return Selector<CVProvider, (CustomSection?, SectionTitles)>(
       key: ValueKey(id),
-      builder: (context, provider, _) {
-        final customSections = provider.cvData.customSections;
-        final sectionIndex = customSections.indexWhere((s) => s.id == id);
-        if (sectionIndex == -1) return const SizedBox.shrink();
-
-        final section = customSections[sectionIndex];
+      selector: (_, p) {
+        final section = p.cvData.customSections.cast<CustomSection?>().firstWhere((s) => s?.id == id, orElse: () => null);
+        return (section, p.cvData.sectionTitles);
+      },
+      builder: (context, data, _) {
+        final section = data.$1;
+        final sectionTitles = data.$2;
+        final provider = context.read<CVProvider>();
+        
+        if (section == null) return const SizedBox.shrink();
 
         return ExpansionTile(
           leading: const Icon(Icons.dashboard_customize),
           title: _buildSectionHeader(context, section.title, section.isVisible, (val) {
             section.title = val;
-            provider.updateSectionTitles(provider.cvData.sectionTitles); // Trigger update
+            provider.updateSectionTitles(sectionTitles); // Trigger update
             provider.updateCustomSection(id, section);
           }, () {
             section.isVisible = !section.isVisible;
@@ -750,11 +792,14 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
   }
 
   Widget _buildExperienceSection({Key? key}) {
-    return Consumer<CVProvider>(
+    return Selector<CVProvider, (List<Experience>, SectionTitles)>(
       key: key,
-      builder: (context, provider, _) {
-        final titles = provider.cvData.sectionTitles;
-        final list = provider.cvData.experience;
+      selector: (_, p) => (List.from(p.cvData.experience), p.cvData.sectionTitles),
+      builder: (context, data, _) {
+        final list = data.$1;
+        final titles = data.$2;
+        final provider = context.read<CVProvider>();
+        
         return ExpansionTile(
           leading: const Icon(Icons.work),
           title: _buildSectionHeader(context, titles.experience, titles.showExperience, (val) {
@@ -872,11 +917,14 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
   }
 
   Widget _buildInternshipSection({Key? key}) {
-    return Consumer<CVProvider>(
+    return Selector<CVProvider, (List<Internship>, SectionTitles)>(
       key: key,
-      builder: (context, provider, _) {
-        final titles = provider.cvData.sectionTitles;
-        final list = provider.cvData.internships;
+      selector: (_, p) => (List.from(p.cvData.internships), p.cvData.sectionTitles),
+      builder: (context, data, _) {
+        final list = data.$1;
+        final titles = data.$2;
+        final provider = context.read<CVProvider>();
+        
         return ExpansionTile(
           leading: const Icon(Icons.history_edu),
           title: _buildSectionHeader(context, titles.internships, titles.showInternships, (val) {
@@ -993,11 +1041,13 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
   }
 
   Widget _buildReferencesSection({Key? key}) {
-    return Consumer<CVProvider>(
+    return Selector<CVProvider, (List<Reference>, SectionTitles)>(
       key: key,
-      builder: (context, provider, _) {
-        final titles = provider.cvData.sectionTitles;
-        final list = provider.cvData.references;
+      selector: (_, p) => (List.from(p.cvData.references), p.cvData.sectionTitles),
+      builder: (context, data, _) {
+        final list = data.$1;
+        final titles = data.$2;
+        final provider = context.read<CVProvider>();
         return ExpansionTile(
           leading: const Icon(Icons.people),
           title: _buildSectionHeader(context, titles.references, titles.showReferences, (val) {
@@ -1106,11 +1156,13 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
   }
 
   Widget _buildEducationSection({Key? key}) {
-    return Consumer<CVProvider>(
+    return Selector<CVProvider, (List<Education>, SectionTitles)>(
       key: key,
-      builder: (context, provider, _) {
-        final titles = provider.cvData.sectionTitles;
-        final list = provider.cvData.education;
+      selector: (_, p) => (List.from(p.cvData.education), p.cvData.sectionTitles),
+      builder: (context, data, _) {
+        final list = data.$1;
+        final titles = data.$2;
+        final provider = context.read<CVProvider>();
         return ExpansionTile(
           leading: const Icon(Icons.school),
           title: _buildSectionHeader(context, titles.education, titles.showEducation, (val) {
@@ -1227,11 +1279,13 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
   }
 
   Widget _buildSkillsSection({Key? key}) {
-    return Consumer<CVProvider>(
+    return Selector<CVProvider, (List<Skill>, SectionTitles)>(
       key: key,
-      builder: (context, provider, _) {
-        final titles = provider.cvData.sectionTitles;
-        final list = provider.cvData.skills;
+      selector: (_, p) => (List.from(p.cvData.skills), p.cvData.sectionTitles),
+      builder: (context, data, _) {
+        final list = data.$1;
+        final titles = data.$2;
+        final provider = context.read<CVProvider>();
         return ExpansionTile(
           leading: const Icon(Icons.star),
           title: _buildSectionHeader(context, titles.skills, titles.showSkills, (val) {
@@ -1286,11 +1340,13 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
   }
 
   Widget _buildCertificationSection({Key? key}) {
-    return Consumer<CVProvider>(
+    return Selector<CVProvider, (List<Certification>, SectionTitles)>(
       key: key,
-      builder: (context, provider, _) {
-        final titles = provider.cvData.sectionTitles;
-        final list = provider.cvData.certifications;
+      selector: (_, p) => (List.from(p.cvData.certifications), p.cvData.sectionTitles),
+      builder: (context, data, _) {
+        final list = data.$1;
+        final titles = data.$2;
+        final provider = context.read<CVProvider>();
         return ExpansionTile(
           leading: const Icon(Icons.verified),
           title: _buildSectionHeader(context, titles.certifications, titles.showCertifications, (val) {
@@ -1441,6 +1497,9 @@ class DebouncedPdfPreview extends StatefulWidget {
 class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
   Timer? _debounceTimer;
   late CVData _previewData;
+  double _maxPageWidth = 550.0;
+  bool _isInitialLoad = true;
+  bool _isUpdating = false;
 
   @override
   void initState() {
@@ -1451,13 +1510,16 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
   @override
   void didUpdateWidget(DebouncedPdfPreview oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Use a shorter debounce of 400ms for more responsive feel.
+    // Use a shorter debounce of 200ms for more responsive feel.
     // Instead of showing a spinner, we keep the old data until the new is ready.
     _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 400), () {
+    setState(() => _isUpdating = true);
+    _debounceTimer = Timer(const Duration(milliseconds: 200), () {
       if (mounted) {
         setState(() {
           _previewData = widget.data;
+          _isInitialLoad = false;
+          _isUpdating = false;
         });
       }
     });
@@ -1622,7 +1684,8 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
                   constraints: const BoxConstraints(),
                   onPressed: () async {
                     final bytes = await PDFService.generateCV(_previewData);
-                    await Printing.sharePdf(bytes: bytes, filename: 'SmartCV_${DateTime.now().millisecondsSinceEpoch}.pdf');
+                    final name = _previewData.pdfFileName.isNotEmpty ? _previewData.pdfFileName : 'SmartCV';
+                    await Printing.sharePdf(bytes: bytes, filename: '$name.pdf');
                   },
                 ),
                 const SizedBox(width: 12),
@@ -1633,7 +1696,8 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
                   constraints: const BoxConstraints(),
                   onPressed: () async {
                     final bytes = await PDFService.generateCV(_previewData);
-                    await Printing.layoutPdf(onLayout: (format) => bytes, name: 'SmartCV_${DateTime.now().millisecondsSinceEpoch}');
+                    final name = _previewData.pdfFileName.isNotEmpty ? _previewData.pdfFileName : 'SmartCV';
+                    await Printing.layoutPdf(onLayout: (format) => bytes, name: name);
                   },
                 ),
                 const SizedBox(width: 12),
@@ -1665,13 +1729,134 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
         ),
         const Divider(height: 1),
         Expanded(
-          child: PdfPreview(
-            build: (format) => PDFService.generateCV(_previewData),
-            allowSharing: false, // Hidden to use our own custom icon
-            allowPrinting: false, // User requested to remove print
-            canChangeOrientation: false,
-            canChangePageFormat: false,
-            canDebug: false,
+          child: Stack(
+            children: [
+              PdfPreview(
+                key: const ValueKey('cv_preview_stable'),
+                build: (format) => PDFService.generateCV(_previewData),
+                allowSharing: false, // Hidden to use our own custom icon
+                allowPrinting: false, // User requested to remove print
+                canChangeOrientation: false,
+                canChangePageFormat: false,
+                canDebug: false,
+                maxPageWidth: _maxPageWidth,
+                loadingWidget: _isInitialLoad ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const CircularProgressIndicator(strokeWidth: 3),
+                      const SizedBox(height: 20),
+                      Text(
+                        'SmartCV is crafting your masterpiece...',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.blue.shade700,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ) : const SizedBox.shrink(),
+              ),
+              if (_isUpdating)
+                const Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: LinearProgressIndicator(
+                  minHeight: 2,
+                  backgroundColor: Colors.transparent,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                ),
+                ),
+            ],
+          ),
+        ),
+        const Divider(height: 1),
+        Container(
+          height: 44,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 4,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Tooltip(
+                message: 'Zoom Out',
+                child: IconButton(
+                  icon: const Icon(Icons.zoom_out, size: 18, color: Colors.blueGrey),
+                  onPressed: () {
+                    setState(() {
+                      _maxPageWidth = (_maxPageWidth - 100).clamp(300.0, 1500.0);
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 120,
+                child: SliderTheme(
+                  data: SliderTheme.of(context).copyWith(
+                    trackHeight: 3,
+                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
+                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+                    activeTrackColor: Colors.blue.shade400,
+                    inactiveTrackColor: Colors.grey.shade200,
+                    thumbColor: Colors.blue.shade600,
+                  ),
+                  child: Slider(
+                    value: _maxPageWidth,
+                    min: 300,
+                    max: 1500,
+                    onChanged: (val) {
+                      setState(() {
+                        _maxPageWidth = val;
+                      });
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Tooltip(
+                message: 'Zoom In',
+                child: IconButton(
+                  icon: const Icon(Icons.zoom_in, size: 18, color: Colors.blueGrey),
+                  onPressed: () {
+                    setState(() {
+                      _maxPageWidth = (_maxPageWidth + 100).clamp(300.0, 1500.0);
+                    });
+                  },
+                ),
+              ),
+              Container(height: 16, width: 1, color: Colors.grey.shade300, margin: const EdgeInsets.symmetric(horizontal: 12)),
+              Text(
+                '${((_maxPageWidth / 550) * 100).round()}%',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blueGrey,
+                  fontFamily: 'monospace',
+                ),
+              ),
+              const SizedBox(width: 16),
+              TextButton(
+                onPressed: () => setState(() => _maxPageWidth = 550.0),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: const Text('Reset', style: TextStyle(fontSize: 10, color: Colors.blue)),
+              ),
+            ],
           ),
         ),
       ],
@@ -1681,34 +1866,95 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
   void _showColorPicker(BuildContext context) {
     final provider = context.read<CVProvider>();
     Color pickerColor = Color(int.parse(provider.cvData.primaryColorHex.replaceFirst('#', '0xff')));
+    
+    final commonColors = [
+      {'color': const Color(0xFF2C3E50), 'label': 'Navy'},
+      {'color': const Color(0xFF2980B9), 'label': 'Royal'},
+      {'color': const Color(0xFF27AE60), 'label': 'Green'},
+      {'color': const Color(0xFFC0392B), 'label': 'Red'},
+      {'color': const Color(0xFF333333), 'label': 'Charcoal'},
+    ];
 
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Pick Title Color'),
-          content: SingleChildScrollView(
-            child: ColorPicker(
-              pickerColor: pickerColor,
-              onColorChanged: (color) {
-                pickerColor = color;
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            ElevatedButton(
-              child: const Text('Apply'),
-              onPressed: () {
-                final hex = '#${pickerColor.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}';
-                provider.updatePrimaryColor(hex);
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Pick Title Color'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Common Presets', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: commonColors.map((cp) {
+                        final color = cp['color'] as Color;
+                        return InkWell(
+                          onTap: () {
+                            setDialogState(() {
+                              pickerColor = color;
+                            });
+                          },
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: color,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: pickerColor == color ? Colors.blue : Colors.transparent,
+                                width: 2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.1),
+                                  blurRadius: 2,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ],
+                            ),
+                            child: pickerColor == color 
+                              ? const Icon(Icons.check, size: 16, color: Colors.white)
+                              : null,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 16),
+                    const Divider(),
+                    const SizedBox(height: 8),
+                    ColorPicker(
+                      pickerColor: pickerColor,
+                      onColorChanged: (color) {
+                        setDialogState(() {
+                          pickerColor = color;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  child: const Text('Cancel'),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                ElevatedButton(
+                  child: const Text('Apply'),
+                  onPressed: () {
+                    final hex = '#${pickerColor.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}';
+                    provider.updatePrimaryColor(hex);
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          }
         );
       },
     );
@@ -1801,6 +2047,34 @@ class FullScreenPreview extends StatelessWidget {
         canChangeOrientation: false,
         canChangePageFormat: false,
         canDebug: false,
+        loadingWidget: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(strokeWidth: 3),
+              const SizedBox(height: 20),
+              Text(
+                'SmartCV is crafting your masterpiece...',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.blue.shade700,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Great things take a moment to prepare.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.blueGrey.shade400,
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
