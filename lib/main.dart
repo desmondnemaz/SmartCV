@@ -5,9 +5,10 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 import 'core/theme/app_theme.dart';
-import 'providers/cv_provider.dart';
-import 'providers/theme_provider.dart';
-import 'ui/screens/home_screen.dart';
+import 'features/editor/presentation/providers/cv_provider.dart';
+import 'features/settings/presentation/providers/theme_provider.dart';
+import 'features/dashboard/presentation/screens/home_screen.dart';
+
 
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();

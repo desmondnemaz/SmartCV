@@ -3,8 +3,9 @@ import 'dart:convert';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-import '../data/models/cv_data.dart';
-import '../core/theme/cv_theme.dart';
+import 'package:smartcv_builder/core/models/cv_data.dart';
+import 'package:smartcv_builder/core/theme/cv_theme.dart';
+
 
 class PDFService {
   static String? _currentFontFamily;

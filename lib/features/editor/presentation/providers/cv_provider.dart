@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../data/models/cv_data.dart';
+import 'package:smartcv_builder/core/models/cv_data.dart';
+
+
 
 class CVProvider with ChangeNotifier {
   CVData _cvData = CVData();
