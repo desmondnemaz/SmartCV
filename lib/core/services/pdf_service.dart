@@ -52,108 +52,124 @@ class PDFService {
   }
 
 
+  static bool _isLoading = false;
+
   static Future<void> _loadFonts(String fontFamily) async {
     if (_currentFontFamily == fontFamily && _fontRegular != null) return;
+    
+    // Simple lock to prevent multiple concurrent loads
+    if (_isLoading) {
+      while (_isLoading) {
+        await Future.delayed(const Duration(milliseconds: 50));
+      }
+      if (_currentFontFamily == fontFamily && _fontRegular != null) return;
+    }
+
+    _isLoading = true;
     _currentFontFamily = fontFamily;
 
-    switch (fontFamily) {
-      case 'Arimo':
-        _fontRegular = await _loadFontSafe(PdfGoogleFonts.arimoRegular, 'fonts/Roboto-Regular.ttf');
-        _fontBold = await _loadFontSafe(PdfGoogleFonts.arimoBold, 'fonts/Roboto-Bold.ttf');
-        _fontItalic = await _loadFontSafe(PdfGoogleFonts.arimoItalic, 'fonts/Roboto-Italic.ttf');
-        _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.arimoBoldItalic, 'fonts/Roboto-Bold.ttf');
-        break;
-      case 'Carlito':
-        _fontRegular = await _loadFontSafe(PdfGoogleFonts.carlitoRegular, 'fonts/Roboto-Regular.ttf');
-        _fontBold = await _loadFontSafe(PdfGoogleFonts.carlitoBold, 'fonts/Roboto-Bold.ttf');
-        _fontItalic = await _loadFontSafe(PdfGoogleFonts.carlitoItalic, 'fonts/Roboto-Italic.ttf');
-        _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.carlitoBoldItalic, 'fonts/Roboto-Bold.ttf');
-        break;
-      case 'Courier Prime':
-        _fontRegular = await _loadFontSafe(PdfGoogleFonts.courierPrimeRegular, null);
-        _fontBold = await _loadFontSafe(PdfGoogleFonts.courierPrimeBold, null);
-        _fontItalic = await _loadFontSafe(PdfGoogleFonts.courierPrimeItalic, null);
-        _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.courierPrimeBoldItalic, null);
-        break;
-      case 'Open Sans':
-        _fontRegular = await _loadFontSafe(PdfGoogleFonts.openSansRegular, 'fonts/Roboto-Regular.ttf');
-        _fontBold = await _loadFontSafe(PdfGoogleFonts.openSansBold, 'fonts/Roboto-Bold.ttf');
-        _fontItalic = await _loadFontSafe(PdfGoogleFonts.openSansItalic, 'fonts/Roboto-Italic.ttf');
-        _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.openSansBoldItalic, 'fonts/Roboto-Bold.ttf');
-        break;
-      case 'BundledGaramond':
-        _fontRegular = await _loadFontSafe(PdfGoogleFonts.notoSerifRegular, 'fonts/EBGaramond-Regular.ttf', preferAsset: true);
-        _fontBold = await _loadFontSafe(PdfGoogleFonts.notoSerifBold, 'fonts/EBGaramond-Bold.ttf', preferAsset: true);
-        _fontItalic = await _loadFontSafe(PdfGoogleFonts.notoSerifItalic, 'fonts/EBGaramond-Regular.ttf', preferAsset: true);
-        _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.notoSerifBoldItalic, 'fonts/EBGaramond-Bold.ttf', preferAsset: true);
-        break;
-      case 'EBGaramond':
-      case 'Noto Serif':
-        _fontRegular = await _loadFontSafe(PdfGoogleFonts.notoSerifRegular, 'fonts/EBGaramond-Regular.ttf');
-        _fontBold = await _loadFontSafe(PdfGoogleFonts.notoSerifBold, 'fonts/EBGaramond-Bold.ttf');
-        _fontItalic = await _loadFontSafe(PdfGoogleFonts.notoSerifItalic, 'fonts/EBGaramond-Regular.ttf');
-        _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.notoSerifBoldItalic, 'fonts/EBGaramond-Bold.ttf');
-        break;
-      case 'Gelasio':
-        _fontRegular = await _loadFontSafe(PdfGoogleFonts.gelasioRegular, 'fonts/EBGaramond-Regular.ttf');
-        _fontBold = await _loadFontSafe(PdfGoogleFonts.gelasioBold, 'fonts/EBGaramond-Bold.ttf');
-        _fontItalic = await _loadFontSafe(PdfGoogleFonts.gelasioItalic, 'fonts/EBGaramond-Regular.ttf');
-        _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.gelasioBoldItalic, 'fonts/EBGaramond-Bold.ttf');
-        break;
-      case 'Lato':
-        _fontRegular = await _loadFontSafe(PdfGoogleFonts.latoRegular, 'fonts/Roboto-Regular.ttf');
-        _fontBold = await _loadFontSafe(PdfGoogleFonts.latoBold, 'fonts/Roboto-Bold.ttf');
-        _fontItalic = await _loadFontSafe(PdfGoogleFonts.latoItalic, 'fonts/Roboto-Italic.ttf');
-        _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.latoBoldItalic, 'fonts/Roboto-Bold.ttf');
-        break;
-      case 'Noto Sans':
-        _fontRegular = await _loadFontSafe(PdfGoogleFonts.notoSansRegular, 'fonts/Roboto-Regular.ttf');
-        _fontBold = await _loadFontSafe(PdfGoogleFonts.notoSansBold, 'fonts/Roboto-Bold.ttf');
-        _fontItalic = await _loadFontSafe(PdfGoogleFonts.notoSansItalic, 'fonts/Roboto-Italic.ttf');
-        _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.notoSansBoldItalic, 'fonts/Roboto-Bold.ttf');
-        break;
-      case 'BundledPoppins':
-        _fontRegular = await _loadFontSafe(PdfGoogleFonts.poppinsRegular, 'fonts/Poppins-Regular.ttf', preferAsset: true);
-        _fontBold = await _loadFontSafe(PdfGoogleFonts.poppinsBold, 'fonts/Poppins-Bold.ttf', preferAsset: true);
-        _fontItalic = await _loadFontSafe(PdfGoogleFonts.poppinsItalic, 'fonts/Poppins-Regular.ttf', preferAsset: true);
-        _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.poppinsBoldItalic, 'fonts/Poppins-Bold.ttf', preferAsset: true);
-        break;
-      case 'Poppins':
-        _fontRegular = await _loadFontSafe(PdfGoogleFonts.poppinsRegular, 'fonts/Poppins-Regular.ttf');
-        _fontBold = await _loadFontSafe(PdfGoogleFonts.poppinsBold, 'fonts/Poppins-Bold.ttf');
-        _fontItalic = await _loadFontSafe(PdfGoogleFonts.poppinsItalic, 'fonts/Poppins-Regular.ttf');
-        _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.poppinsBoldItalic, 'fonts/Poppins-Bold.ttf');
-        break;
-      case 'BundledTinos':
-        _fontRegular = await _loadFontSafe(PdfGoogleFonts.tinosRegular, 'fonts/Tinos-Regular.ttf', preferAsset: true);
-        _fontBold = await _loadFontSafe(PdfGoogleFonts.tinosBold, 'fonts/Tinos-Bold.ttf', preferAsset: true);
-        _fontItalic = await _loadFontSafe(PdfGoogleFonts.tinosItalic, 'fonts/Tinos-Italic.ttf', preferAsset: true);
-        _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.tinosBoldItalic, 'fonts/Tinos-BoldItalic.ttf', preferAsset: true);
-        break;
-      case 'Tinos':
-        _fontRegular = await _loadFontSafe(PdfGoogleFonts.tinosRegular, 'fonts/Tinos-Regular.ttf');
-        _fontBold = await _loadFontSafe(PdfGoogleFonts.tinosBold, 'fonts/Tinos-Bold.ttf');
-        _fontItalic = await _loadFontSafe(PdfGoogleFonts.tinosItalic, 'fonts/Tinos-Italic.ttf');
-        _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.tinosBoldItalic, 'fonts/Tinos-BoldItalic.ttf');
-        break;
-      case 'Source Sans 3':
-        _fontRegular = await _loadFontSafe(PdfGoogleFonts.sourceSans3Regular, 'fonts/Roboto-Regular.ttf');
-        _fontBold = await _loadFontSafe(PdfGoogleFonts.sourceSans3Bold, 'fonts/Roboto-Bold.ttf');
-        _fontItalic = await _loadFontSafe(PdfGoogleFonts.sourceSans3Italic, 'fonts/Roboto-Italic.ttf');
-        _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.sourceSans3BoldItalic, 'fonts/Roboto-Bold.ttf');
-        break;
-      case 'BundledRoboto':
-        _fontRegular = await _loadFontSafe(PdfGoogleFonts.robotoRegular, 'fonts/Roboto-Regular.ttf', preferAsset: true);
-        _fontBold = await _loadFontSafe(PdfGoogleFonts.robotoBold, 'fonts/Roboto-Bold.ttf', preferAsset: true);
-        _fontItalic = await _loadFontSafe(PdfGoogleFonts.robotoItalic, 'fonts/Roboto-Italic.ttf', preferAsset: true);
-        _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.robotoBoldItalic, 'fonts/Roboto-Bold.ttf', preferAsset: true);
-        break;
-      case 'Roboto':
-      default:
-        _fontRegular = await _loadFontSafe(PdfGoogleFonts.robotoRegular, 'fonts/Roboto-Regular.ttf');
-        _fontBold = await _loadFontSafe(PdfGoogleFonts.robotoBold, 'fonts/Roboto-Bold.ttf');
-        _fontItalic = await _loadFontSafe(PdfGoogleFonts.robotoItalic, 'fonts/Roboto-Italic.ttf');
-        _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.robotoBoldItalic, 'fonts/Roboto-Bold.ttf');
+    try {
+      switch (fontFamily) {
+        case 'Arimo':
+          _fontRegular = await _loadFontSafe(PdfGoogleFonts.arimoRegular, 'fonts/Roboto-Regular.ttf');
+          _fontBold = await _loadFontSafe(PdfGoogleFonts.arimoBold, 'fonts/Roboto-Bold.ttf');
+          _fontItalic = await _loadFontSafe(PdfGoogleFonts.arimoItalic, 'fonts/Roboto-Italic.ttf');
+          _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.arimoBoldItalic, 'fonts/Roboto-Bold.ttf');
+          break;
+        case 'Carlito':
+          _fontRegular = await _loadFontSafe(PdfGoogleFonts.carlitoRegular, 'fonts/Roboto-Regular.ttf');
+          _fontBold = await _loadFontSafe(PdfGoogleFonts.carlitoBold, 'fonts/Roboto-Bold.ttf');
+          _fontItalic = await _loadFontSafe(PdfGoogleFonts.carlitoItalic, 'fonts/Roboto-Italic.ttf');
+          _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.carlitoBoldItalic, 'fonts/Roboto-Bold.ttf');
+          break;
+        case 'Courier Prime':
+          _fontRegular = await _loadFontSafe(PdfGoogleFonts.courierPrimeRegular, 'fonts/Roboto-Regular.ttf');
+          _fontBold = await _loadFontSafe(PdfGoogleFonts.courierPrimeBold, 'fonts/Roboto-Bold.ttf');
+          _fontItalic = await _loadFontSafe(PdfGoogleFonts.courierPrimeItalic, 'fonts/Roboto-Italic.ttf');
+          _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.courierPrimeBoldItalic, 'fonts/Roboto-Bold.ttf');
+          break;
+        case 'Open Sans':
+          _fontRegular = await _loadFontSafe(PdfGoogleFonts.openSansRegular, 'fonts/Roboto-Regular.ttf');
+          _fontBold = await _loadFontSafe(PdfGoogleFonts.openSansBold, 'fonts/Roboto-Bold.ttf');
+          _fontItalic = await _loadFontSafe(PdfGoogleFonts.openSansItalic, 'fonts/Roboto-Italic.ttf');
+          _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.openSansBoldItalic, 'fonts/Roboto-Bold.ttf');
+          break;
+        case 'BundledGaramond':
+          _fontRegular = await _loadFontSafe(PdfGoogleFonts.notoSerifRegular, 'fonts/EBGaramond-Regular.ttf', preferAsset: true);
+          _fontBold = await _loadFontSafe(PdfGoogleFonts.notoSerifBold, 'fonts/EBGaramond-Bold.ttf', preferAsset: true);
+          _fontItalic = await _loadFontSafe(PdfGoogleFonts.notoSerifItalic, 'fonts/EBGaramond-Regular.ttf', preferAsset: true);
+          _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.notoSerifBoldItalic, 'fonts/EBGaramond-Bold.ttf', preferAsset: true);
+          break;
+        case 'EBGaramond':
+        case 'Noto Serif':
+          _fontRegular = await _loadFontSafe(PdfGoogleFonts.notoSerifRegular, 'fonts/EBGaramond-Regular.ttf');
+          _fontBold = await _loadFontSafe(PdfGoogleFonts.notoSerifBold, 'fonts/EBGaramond-Bold.ttf');
+          _fontItalic = await _loadFontSafe(PdfGoogleFonts.notoSerifItalic, 'fonts/EBGaramond-Regular.ttf');
+          _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.notoSerifBoldItalic, 'fonts/EBGaramond-Bold.ttf');
+          break;
+        case 'Gelasio':
+          _fontRegular = await _loadFontSafe(PdfGoogleFonts.gelasioRegular, 'fonts/EBGaramond-Regular.ttf');
+          _fontBold = await _loadFontSafe(PdfGoogleFonts.gelasioBold, 'fonts/EBGaramond-Bold.ttf');
+          _fontItalic = await _loadFontSafe(PdfGoogleFonts.gelasioItalic, 'fonts/EBGaramond-Regular.ttf');
+          _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.gelasioBoldItalic, 'fonts/EBGaramond-Bold.ttf');
+          break;
+        case 'Lato':
+          _fontRegular = await _loadFontSafe(PdfGoogleFonts.latoRegular, 'fonts/Roboto-Regular.ttf');
+          _fontBold = await _loadFontSafe(PdfGoogleFonts.latoBold, 'fonts/Roboto-Bold.ttf');
+          _fontItalic = await _loadFontSafe(PdfGoogleFonts.latoItalic, 'fonts/Roboto-Italic.ttf');
+          _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.latoBoldItalic, 'fonts/Roboto-Bold.ttf');
+          break;
+        case 'Noto Sans':
+          _fontRegular = await _loadFontSafe(PdfGoogleFonts.notoSansRegular, 'fonts/Roboto-Regular.ttf');
+          _fontBold = await _loadFontSafe(PdfGoogleFonts.notoSansBold, 'fonts/Roboto-Bold.ttf');
+          _fontItalic = await _loadFontSafe(PdfGoogleFonts.notoSansItalic, 'fonts/Roboto-Italic.ttf');
+          _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.notoSansBoldItalic, 'fonts/Roboto-Bold.ttf');
+          break;
+        case 'BundledPoppins':
+          _fontRegular = await _loadFontSafe(PdfGoogleFonts.poppinsRegular, 'fonts/Poppins-Regular.ttf', preferAsset: true);
+          _fontBold = await _loadFontSafe(PdfGoogleFonts.poppinsBold, 'fonts/Poppins-Bold.ttf', preferAsset: true);
+          _fontItalic = await _loadFontSafe(PdfGoogleFonts.poppinsItalic, 'fonts/Poppins-Regular.ttf', preferAsset: true);
+          _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.poppinsBoldItalic, 'fonts/Poppins-Bold.ttf', preferAsset: true);
+          break;
+        case 'Poppins':
+          _fontRegular = await _loadFontSafe(PdfGoogleFonts.poppinsRegular, 'fonts/Poppins-Regular.ttf');
+          _fontBold = await _loadFontSafe(PdfGoogleFonts.poppinsBold, 'fonts/Poppins-Bold.ttf');
+          _fontItalic = await _loadFontSafe(PdfGoogleFonts.poppinsItalic, 'fonts/Poppins-Regular.ttf');
+          _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.poppinsBoldItalic, 'fonts/Poppins-Bold.ttf');
+          break;
+        case 'BundledTinos':
+          _fontRegular = await _loadFontSafe(PdfGoogleFonts.tinosRegular, 'fonts/Tinos-Regular.ttf', preferAsset: true);
+          _fontBold = await _loadFontSafe(PdfGoogleFonts.tinosBold, 'fonts/Tinos-Bold.ttf', preferAsset: true);
+          _fontItalic = await _loadFontSafe(PdfGoogleFonts.tinosItalic, 'fonts/Tinos-Italic.ttf', preferAsset: true);
+          _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.tinosBoldItalic, 'fonts/Tinos-BoldItalic.ttf', preferAsset: true);
+          break;
+        case 'Tinos':
+          _fontRegular = await _loadFontSafe(PdfGoogleFonts.tinosRegular, 'fonts/Tinos-Regular.ttf');
+          _fontBold = await _loadFontSafe(PdfGoogleFonts.tinosBold, 'fonts/Tinos-Bold.ttf');
+          _fontItalic = await _loadFontSafe(PdfGoogleFonts.tinosItalic, 'fonts/Tinos-Italic.ttf');
+          _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.tinosBoldItalic, 'fonts/Tinos-BoldItalic.ttf');
+          break;
+        case 'Source Sans 3':
+          _fontRegular = await _loadFontSafe(PdfGoogleFonts.sourceSans3Regular, 'fonts/Roboto-Regular.ttf');
+          _fontBold = await _loadFontSafe(PdfGoogleFonts.sourceSans3Bold, 'fonts/Roboto-Bold.ttf');
+          _fontItalic = await _loadFontSafe(PdfGoogleFonts.sourceSans3Italic, 'fonts/Roboto-Italic.ttf');
+          _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.sourceSans3BoldItalic, 'fonts/Roboto-Bold.ttf');
+          break;
+        case 'BundledRoboto':
+          _fontRegular = await _loadFontSafe(PdfGoogleFonts.robotoRegular, 'fonts/Roboto-Regular.ttf', preferAsset: true);
+          _fontBold = await _loadFontSafe(PdfGoogleFonts.robotoBold, 'fonts/Roboto-Bold.ttf', preferAsset: true);
+          _fontItalic = await _loadFontSafe(PdfGoogleFonts.robotoItalic, 'fonts/Roboto-Italic.ttf', preferAsset: true);
+          _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.robotoBoldItalic, 'fonts/Roboto-Bold.ttf', preferAsset: true);
+          break;
+        case 'Roboto':
+        default:
+          _fontRegular = await _loadFontSafe(PdfGoogleFonts.robotoRegular, 'fonts/Roboto-Regular.ttf');
+          _fontBold = await _loadFontSafe(PdfGoogleFonts.robotoBold, 'fonts/Roboto-Bold.ttf');
+          _fontItalic = await _loadFontSafe(PdfGoogleFonts.robotoItalic, 'fonts/Roboto-Italic.ttf');
+          _fontBoldItalic = await _loadFontSafe(PdfGoogleFonts.robotoBoldItalic, 'fonts/Roboto-Bold.ttf');
+      }
+    } finally {
+      _isLoading = false;
     }
   }
 
@@ -173,14 +189,21 @@ class PDFService {
   static Future<Uint8List> generateCV(CVData data) async {
     await _loadFonts(data.fontFamily);
 
+    // Final safety check to avoid null operator crash
+    final regular = _fontRegular ?? await _loadFontSafe(PdfGoogleFonts.robotoRegular, 'fonts/Roboto-Regular.ttf');
+    final bold = _fontBold ?? await _loadFontSafe(PdfGoogleFonts.robotoBold, 'fonts/Roboto-Bold.ttf');
+    final italic = _fontItalic ?? await _loadFontSafe(PdfGoogleFonts.robotoItalic, 'fonts/Roboto-Italic.ttf');
+    final boldItalic = _fontBoldItalic ?? await _loadFontSafe(PdfGoogleFonts.robotoBoldItalic, 'fonts/Roboto-Bold.ttf');
+
     final pdf = pw.Document(
       theme: pw.ThemeData.withFont(
-        base: _fontRegular!,
-        bold: _fontBold!,
-        italic: _fontItalic!,
-        boldItalic: _fontBoldItalic!,
+        base: regular,
+        bold: bold,
+        italic: italic,
+        boldItalic: boldItalic,
       ),
     );
+
 
     pdf.addPage(
       pw.MultiPage(
@@ -205,8 +228,9 @@ class PDFService {
                 if (custom.isVisible && custom.description.isNotEmpty) {
                   content.add(_buildSectionTitle(custom.title, sizes, lh, primaryColor));
                   // Render rich text (Quill Delta JSON) to PDF
-                  content.addAll(_buildRichText(custom.description, _fontRegular!, _fontBold!, _fontItalic!, _fontBoldItalic!, sizes['body']!, lh));
+                  content.addAll(_buildRichText(custom.description, regular, bold, italic, boldItalic, sizes['body']!, lh));
                   content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
+
                 }
               }
               continue;
@@ -222,30 +246,34 @@ class PDFService {
               case 'professionalSummary':
                 if (data.sectionTitles.showProfessionalSummary && data.personalInfo.profileSummary.isNotEmpty) {
                   content.add(_buildSectionTitle(data.sectionTitles.professionalSummary, sizes, lh, primaryColor));
-                  content.addAll(_buildRichText(data.personalInfo.profileSummary, _fontRegular!, _fontBold!, _fontItalic!, _fontBoldItalic!, sizes['body']!, lh));
+                  content.addAll(_buildRichText(data.personalInfo.profileSummary, regular, bold, italic, boldItalic, sizes['body']!, lh));
                   content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
+
                 break;
               case 'experience':
                 if (data.sectionTitles.showExperience && data.experience.isNotEmpty) {
                   content.add(_buildSectionTitle(data.sectionTitles.experience, sizes, lh, primaryColor));
-                  content.addAll(data.experience.map((e) => _buildExperienceItem(e, sizes, lh)));
+                  content.addAll(data.experience.map((e) => _buildExperienceItem(e, sizes, lh, regular, bold, italic, boldItalic)));
                   content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
+
                 break;
               case 'internships':
                 if (data.sectionTitles.showInternships && data.internships.isNotEmpty) {
                   content.add(_buildSectionTitle(data.sectionTitles.internships, sizes, lh, primaryColor));
-                  content.addAll(data.internships.map((e) => _buildInternshipItem(e, sizes, lh)));
+                  content.addAll(data.internships.map((e) => _buildInternshipItem(e, sizes, lh, regular, bold, italic, boldItalic)));
                   content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
+
                 break;
               case 'education':
                 if (data.sectionTitles.showEducation && data.education.isNotEmpty) {
                   content.add(_buildSectionTitle(data.sectionTitles.education, sizes, lh, primaryColor));
-                  content.addAll(data.education.map((e) => _buildEducationItem(e, sizes, lh)));
+                  content.addAll(data.education.map((e) => _buildEducationItem(e, sizes, lh, regular, bold, italic, boldItalic)));
                   content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
+
                 break;
               case 'skills':
                 if (data.sectionTitles.showSkills && data.skills.isNotEmpty) {
@@ -257,16 +285,18 @@ class PDFService {
               case 'certifications':
                 if (data.sectionTitles.showCertifications && data.certifications.isNotEmpty) {
                   content.add(_buildSectionTitle(data.sectionTitles.certifications, sizes, lh, primaryColor));
-                  content.addAll(data.certifications.map((c) => _buildCertificationItem(c, sizes, lh)));
+                  content.addAll(data.certifications.map((c) => _buildCertificationItem(c, sizes, lh, regular, bold, italic, boldItalic)));
                   content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
+
                 break;
               case 'references':
                 if (data.sectionTitles.showReferences && data.references.isNotEmpty) {
                   content.add(_buildSectionTitle(data.sectionTitles.references, sizes, lh, primaryColor));
-                  content.addAll(data.references.map((r) => _buildReferenceItem(r, sizes, lh)));
+                  content.addAll(data.references.map((r) => _buildReferenceItem(r, sizes, lh, regular, bold, italic, boldItalic)));
                   content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
+
                 break;
             }
           }
@@ -401,7 +431,8 @@ class PDFService {
     );
   }
 
-  static pw.Widget _buildExperienceItem(Experience exp, Map<String, double> sizes, double lh) {
+  static pw.Widget _buildExperienceItem(Experience exp, Map<String, double> sizes, double lh, pw.Font regular, pw.Font bold, pw.Font italic, pw.Font boldItalic) {
+
     return pw.Padding(
       padding: pw.EdgeInsets.only(bottom: CVTheme.itemSpacing * lh),
       child: pw.Column(
@@ -438,13 +469,15 @@ class PDFService {
             ),
           ),
           pw.SizedBox(height: 4 * lh),
-          ..._buildRichText(exp.description, _fontRegular!, _fontBold!, _fontItalic!, _fontBoldItalic!, sizes['body']!, lh),
+          ..._buildRichText(exp.description, regular, bold, italic, boldItalic, sizes['body']!, lh),
+
         ],
       ),
     );
   }
 
-  static pw.Widget _buildInternshipItem(Internship internship, Map<String, double> sizes, double lh) {
+  static pw.Widget _buildInternshipItem(Internship internship, Map<String, double> sizes, double lh, pw.Font regular, pw.Font bold, pw.Font italic, pw.Font boldItalic) {
+
     return pw.Padding(
       padding: pw.EdgeInsets.only(bottom: CVTheme.itemSpacing * lh),
       child: pw.Column(
@@ -481,13 +514,15 @@ class PDFService {
             ),
           ),
           pw.SizedBox(height: 4 * lh),
-          ..._buildRichText(internship.description, _fontRegular!, _fontBold!, _fontItalic!, _fontBoldItalic!, sizes['body']!, lh),
+          ..._buildRichText(internship.description, regular, bold, italic, boldItalic, sizes['body']!, lh),
+
         ],
       ),
     );
   }
 
-  static pw.Widget _buildEducationItem(Education ed, Map<String, double> sizes, double lh) {
+  static pw.Widget _buildEducationItem(Education ed, Map<String, double> sizes, double lh, pw.Font regular, pw.Font bold, pw.Font italic, pw.Font boldItalic) {
+
     return pw.Padding(
       padding: pw.EdgeInsets.only(bottom: CVTheme.itemSpacing * lh),
       child: pw.Column(
@@ -525,7 +560,8 @@ class PDFService {
           ),
           if (ed.description.isNotEmpty) ...[
             pw.SizedBox(height: 4 * lh),
-            ..._buildRichText(ed.description, _fontRegular!, _fontBold!, _fontItalic!, _fontBoldItalic!, sizes['body']!, lh),
+            ..._buildRichText(ed.description, regular, bold, italic, boldItalic, sizes['body']!, lh),
+
           ]
         ],
       ),
@@ -550,7 +586,8 @@ class PDFService {
     );
   }
 
-  static pw.Widget _buildCertificationItem(Certification cert, Map<String, double> sizes, double lh) {
+  static pw.Widget _buildCertificationItem(Certification cert, Map<String, double> sizes, double lh, pw.Font regular, pw.Font bold, pw.Font italic, pw.Font boldItalic) {
+
     return pw.Padding(
       padding: pw.EdgeInsets.only(bottom: CVTheme.itemSpacing * lh),
       child: pw.Column(
@@ -606,14 +643,16 @@ class PDFService {
           ),
           if (cert.description.isNotEmpty) ...[
             pw.SizedBox(height: 4 * lh),
-            ..._buildRichText(cert.description, _fontRegular!, _fontBold!, _fontItalic!, _fontBoldItalic!, sizes['body']!, lh),
+            ..._buildRichText(cert.description, regular, bold, italic, boldItalic, sizes['body']!, lh),
+
           ]
         ],
       ),
     );
   }
 
-  static pw.Widget _buildReferenceItem(Reference ref, Map<String, double> sizes, double lh) {
+  static pw.Widget _buildReferenceItem(Reference ref, Map<String, double> sizes, double lh, pw.Font regular, pw.Font bold, pw.Font italic, pw.Font boldItalic) {
+
     return pw.Padding(
       padding: pw.EdgeInsets.only(bottom: CVTheme.itemSpacing * lh),
       child: pw.Column(
