@@ -61,6 +61,8 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
   String _headerAlignment = 'left';
   bool _showNameAsHeader = false;
   final List<_FieldControllerPair> _fieldControllers = [];
+  late TextEditingController _pdfFileNameCtrl;
+
   // Map to store Quill-related controllers for custom sections to persist state and dispose properly
   final Map<String, _CustomSectionControllers> _customControllers = {};
   // Map for list item descriptions (e.g. 'exp_0', 'edu_1', etc.)
@@ -69,7 +71,9 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
   @override
   void initState() {
     super.initState();
-    final info = context.read<CVProvider>().cvData.personalInfo;
+    final data = context.read<CVProvider>().cvData;
+    final info = data.personalInfo;
+
     
     // Initialize Summary Quill Controller
     try {
@@ -97,7 +101,13 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
     for (var field in info.fields) {
       _addFieldController(field.title, field.value, field.isCompulsory);
     }
+
+    _pdfFileNameCtrl = TextEditingController(text: data.pdfFileName);
+    _pdfFileNameCtrl.addListener(() {
+      context.read<CVProvider>().updatePdfFileName(_pdfFileNameCtrl.text);
+    });
   }
+
 
   void _updatePersonalInfo() {
     final List<CVField> fields = [];
@@ -275,7 +285,7 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('SmartCV Editor'),
+        title: _buildAppBarTitle(context),
         actions: [
           if (!Responsive.isDesktop(context))
             IconButton(
@@ -284,6 +294,7 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
             ),
         ],
       ),
+
       body: Row(
         children: [
           Expanded(
@@ -449,23 +460,7 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
             ),
             const Divider(),
             const SizedBox(height: 8),
-            Selector<CVProvider, String>(
-              selector: (_, p) => p.cvData.pdfFileName,
-              builder: (context, fileName, _) {
-                return TextFormField(
-                  initialValue: fileName,
-                  decoration: const InputDecoration(
-                    labelText: 'Export Filename (PDF)',
-                    hintText: 'e.g. My_CV',
-                    prefixIcon: Icon(Icons.file_present),
-                    isDense: true,
-                  ),
-                  onChanged: (val) {
-                    context.read<CVProvider>().updatePdfFileName(val);
-                  },
-                );
-              },
-            ),
+
           ],
         );
       },
@@ -1481,6 +1476,42 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
         height: MediaQuery.of(context).size.height * 0.9,
         child: _buildLivePreview(),
       ),
+    );
+  }
+  Widget _buildAppBarTitle(BuildContext context) {
+    if (Responsive.isMobile(context)) {
+      return const Text('SmartCV Editor', style: TextStyle(fontSize: 16));
+    }
+
+    return Row(
+      children: [
+        const Icon(Icons.description_outlined, size: 20, color: Colors.white70),
+        const SizedBox(width: 12),
+        SizedBox(
+          width: 300,
+          child: TextField(
+            controller: _pdfFileNameCtrl,
+            cursorColor: Colors.white,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+            decoration: InputDecoration(
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+              filled: true,
+              fillColor: Colors.white.withValues(alpha: 0.1),
+              hintText: 'Untitled CV',
+              hintStyle: const TextStyle(color: Colors.white70),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

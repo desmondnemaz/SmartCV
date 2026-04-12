@@ -256,8 +256,9 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
           constraints: const BoxConstraints(),
           onPressed: () async {
             final bytes = await PDFService.generateCV(_previewData);
-            final name = _previewData.pdfFileName.isNotEmpty ? _previewData.pdfFileName : 'SmartCV';
+            final name = _previewData.pdfFileName.isNotEmpty ? _previewData.pdfFileName : 'Untitled_CV';
             await Printing.sharePdf(bytes: bytes, filename: '$name.pdf');
+
           },
         ),
         const SizedBox(width: 12),
@@ -268,8 +269,9 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
           constraints: const BoxConstraints(),
           onPressed: () async {
             final bytes = await PDFService.generateCV(_previewData);
-            final name = _previewData.pdfFileName.isNotEmpty ? _previewData.pdfFileName : 'SmartCV';
+            final name = _previewData.pdfFileName.isNotEmpty ? _previewData.pdfFileName : 'Untitled_CV';
             await Printing.layoutPdf(onLayout: (format) => bytes, name: name);
+
           },
         ),
         const SizedBox(width: 12),

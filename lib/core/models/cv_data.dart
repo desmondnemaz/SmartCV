@@ -208,7 +208,8 @@ class CVData {
     this.lineHeight = 1.0,
     this.primaryColorHex = '#0D47A1',
     this.fontFamily = 'Roboto',
-    this.pdfFileName = 'My_CV',
+    this.pdfFileName = '',
+
   })  : personalInfo = personalInfo ?? PersonalInfo(),
 
         sectionTitles = sectionTitles ?? SectionTitles(),
