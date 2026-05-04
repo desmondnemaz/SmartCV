@@ -191,6 +191,7 @@ class CVData {
   String primaryColorHex;
   String fontFamily;
   String pdfFileName;
+  String templateId;
 
 
   CVData({
@@ -209,6 +210,7 @@ class CVData {
     this.primaryColorHex = '#0D47A1',
     this.fontFamily = 'Roboto',
     this.pdfFileName = '',
+    this.templateId = 'default',
 
   })  : personalInfo = personalInfo ?? PersonalInfo(),
 

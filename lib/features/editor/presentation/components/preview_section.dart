@@ -25,6 +25,14 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
   double _maxPageWidth = 550.0;
   bool _isInitialLoad = true;
   bool _isUpdating = false;
+  bool _showTemplateSelector = false;
+
+  final List<Map<String, String>> _availableTemplates = [
+    {'id': 'default', 'name': 'Simple'},
+    {'id': 'modern', 'name': 'Modern'},
+    {'id': 'metro', 'name': 'Metro'},
+    {'id': 'horizontal', 'name': 'Horizontal'},
+  ];
 
   @override
   void initState() {
@@ -102,6 +110,13 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
                     backgroundColor: Colors.transparent,
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
                   ),
+                ),
+              if (_showTemplateSelector)
+                Positioned(
+                  bottom: 16,
+                  left: 16,
+                  right: 16,
+                  child: _buildTemplateSelectorOverlay(context),
                 ),
             ],
           ),
@@ -317,6 +332,31 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          TextButton.icon(
+            icon: Icon(
+              _showTemplateSelector ? Icons.keyboard_arrow_down : Icons.view_carousel, 
+              size: 18, 
+              color: _showTemplateSelector ? Colors.blue : Colors.blueGrey
+            ),
+            label: Text(
+              'Templates', 
+              style: TextStyle(
+                color: _showTemplateSelector ? Colors.blue : Colors.blueGrey,
+                fontWeight: FontWeight.bold
+              )
+            ),
+            onPressed: () {
+              setState(() {
+                _showTemplateSelector = !_showTemplateSelector;
+              });
+            },
+            style: TextButton.styleFrom(
+              backgroundColor: _showTemplateSelector ? Colors.blue.withValues(alpha: 0.1) : Colors.transparent,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            ),
+          ),
+          Container(height: 16, width: 1, color: Colors.grey.shade300, margin: const EdgeInsets.symmetric(horizontal: 8)),
           IconButton(
             icon: const Icon(Icons.zoom_out, size: 18, color: Colors.blueGrey),
             onPressed: () {
@@ -385,6 +425,102 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
             style: TextStyle(color: Colors.blue.shade700, fontSize: 15, fontWeight: FontWeight.bold),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTemplateSelectorOverlay(BuildContext context) {
+    final currentTemplate = context.watch<CVProvider>().cvData.templateId;
+    
+    return Material(
+      elevation: 8,
+      borderRadius: BorderRadius.circular(16),
+      color: Colors.white,
+      child: Container(
+        height: 180,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Select Template', 
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 18),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () => setState(() => _showTemplateSelector = false),
+                )
+              ],
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: _availableTemplates.length,
+                separatorBuilder: (context, index) => const SizedBox(width: 12),
+                itemBuilder: (context, index) {
+                  final template = _availableTemplates[index];
+                  final isSelected = currentTemplate == template['id'];
+                  
+                  return GestureDetector(
+                    onTap: () {
+                      context.read<CVProvider>().changeTemplate(template['id']!);
+                    },
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            width: 90,
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: isSelected ? Colors.blue : Colors.grey.shade300,
+                                width: isSelected ? 2.5 : 1,
+                              ),
+                              boxShadow: isSelected ? [
+                                BoxShadow(
+                                  color: Colors.blue.withValues(alpha: 0.2),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                )
+                              ] : null,
+                            ),
+                            child: Center(
+                              // Placeholder icon until we generate images
+                              child: Icon(
+                                Icons.text_snippet,
+                                color: isSelected ? Colors.blue : Colors.grey.shade400,
+                                size: 32,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          template['name']!,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            color: isSelected ? Colors.blue.shade800 : Colors.blueGrey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

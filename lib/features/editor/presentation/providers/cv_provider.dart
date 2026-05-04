@@ -275,7 +275,10 @@ class CVProvider with ChangeNotifier {
     notifyListeners();
   }
 
-
+  void changeTemplate(String templateId) {
+    _cvData.templateId = templateId;
+    notifyListeners();
+  }
   // Clear all data
   void clearAll() {
     _cvData = CVData();
