@@ -475,9 +475,12 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
         Expanded(
           child: Row(
             children: [
-              Text(
-                currentTitle,
-                style: TextStyle(color: isVisible ? null : Colors.grey),
+              Expanded(
+                child: Text(
+                  currentTitle,
+                  style: TextStyle(color: isVisible ? null : Colors.grey),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
               if (!isVisible) ...[
                 const SizedBox(width: 8),
