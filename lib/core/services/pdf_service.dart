@@ -15,39 +15,20 @@ class PDFService {
   static pw.Font? _fontBoldItalic;
 
   static Future<pw.Font> _loadFontSafe(Future<pw.Font> Function() onlineProvider, String? assetPath, {bool preferAsset = false}) async {
-    // If we prefer assets or are offline, try asset first
-    if (preferAsset && assetPath != null) {
-      try {
-        final normalizedPath = assetPath.startsWith('assets/') ? assetPath : 'assets/$assetPath';
-        final data = await rootBundle.load(normalizedPath);
-        return pw.Font.ttf(data);
-      } catch (_) {
-        // Fall through to online provider if asset fails
-      }
-    }
-
     try {
-      // Add a timeout to online font loading to prevent hanging
-      return await onlineProvider().timeout(const Duration(seconds: 3));
+      // Attempt to load from Google Fonts with a generous timeout
+      return await onlineProvider().timeout(const Duration(seconds: 15));
     } catch (_) {
+      // Fallback to built-in PDF fonts if online fails to absolutely prevent TTF parsing crashes
       if (assetPath != null) {
-        try {
-          final normalizedPath = assetPath.startsWith('assets/') ? assetPath : 'assets/$assetPath';
-          final data = await rootBundle.load(normalizedPath);
-          return pw.Font.ttf(data);
-        } catch (e1) {
-          try {
-            final altPath = assetPath.startsWith('assets/') ? assetPath.replaceFirst('assets/', '') : assetPath;
-            final data = await rootBundle.load(altPath);
-            return pw.Font.ttf(data);
-          } catch (e) {
-            final fallback = await rootBundle.load('assets/fonts/Roboto-Regular.ttf');
-            return pw.Font.ttf(fallback);
-          }
+        final lower = assetPath.toLowerCase();
+        if (lower.contains('bolditalic') || (lower.contains('bold') && lower.contains('italic'))) {
+          return pw.Font.helveticaBoldOblique();
         }
+        if (lower.contains('bold')) return pw.Font.helveticaBold();
+        if (lower.contains('italic')) return pw.Font.helveticaOblique();
       }
-      final fallback = await rootBundle.load('assets/fonts/Roboto-Regular.ttf');
-      return pw.Font.ttf(fallback);
+      return pw.Font.helvetica();
     }
   }
 
@@ -207,8 +188,18 @@ class PDFService {
 
     pdf.addPage(
       pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(CVTheme.pageMargin),
+        pageFormat: PdfPageFormat.a4.copyWith(
+          marginTop: 36.0,
+          marginBottom: 72.0, // Increased to 1 inch to prevent clipping
+          marginLeft: CVTheme.pageMargin,
+          marginRight: CVTheme.pageMargin,
+        ),
+        margin: pw.EdgeInsets.only(
+          top: 36.0,
+          bottom: 72.0, // Increased to 1 inch to prevent clipping
+          left: CVTheme.pageMargin,
+          right: CVTheme.pageMargin,
+        ),
         build: (pw.Context context) {
           final sizes = _calculateFontSizes(data.baseFontSize);
           final lh = data.lineHeight;
@@ -412,22 +403,24 @@ class PDFService {
   }
 
   static pw.Widget _buildSectionTitle(String title, Map<String, double> sizes, double lh, PdfColor primaryColor) {
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Text(
-          title.toUpperCase(),
-          style: pw.TextStyle(
-            fontSize: sizes['sectionTitle'],
-            fontWeight: pw.FontWeight.bold,
-            color: primaryColor,
-            lineSpacing: sizes['sectionTitle']! * (lh - 1.0),
+    return pw.Container(
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            title.toUpperCase(),
+            style: pw.TextStyle(
+              fontSize: sizes['sectionTitle'],
+              fontWeight: pw.FontWeight.bold,
+              color: primaryColor,
+              lineSpacing: sizes['sectionTitle']! * (lh - 1.0),
+            ),
           ),
-        ),
-        pw.SizedBox(height: 1 * lh),
-        pw.Divider(color: CVTheme.dividerColor, thickness: CVTheme.sectionDividerThickness),
-        pw.SizedBox(height: 2 * lh),
-      ],
+          pw.SizedBox(height: 1 * lh),
+          pw.Divider(color: CVTheme.dividerColor, thickness: CVTheme.sectionDividerThickness),
+          pw.SizedBox(height: 2 * lh),
+        ],
+      ),
     );
   }
 

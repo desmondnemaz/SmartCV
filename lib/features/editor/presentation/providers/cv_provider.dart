@@ -4,9 +4,88 @@ import 'package:smartcv_builder/core/models/cv_data.dart';
 
 
 class CVProvider with ChangeNotifier {
-  CVData _cvData = CVData();
+  CVData _cvData = _createDummyData();
 
   CVData get cvData => _cvData;
+
+  static CVData _createDummyData() {
+    return CVData(
+      personalInfo: PersonalInfo(
+        jobTitle: 'Senior Software Engineer',
+        headerAlignment: 'left',
+        showNameAsHeader: true,
+        profileSummary: '[{"insert":"Experienced software engineer with a passion for developing innovative programs that expedite the efficiency and effectiveness of organizational success. Well-versed in technology and writing code to create systems that are reliable and user-friendly.\\n"}]',
+        fields: [
+          CVField(title: 'Name', value: 'John Doe', isCompulsory: true),
+          CVField(title: 'Email', value: 'john.doe@example.com', isCompulsory: true),
+          CVField(title: 'Phone', value: '+1 (555) 123-4567', isCompulsory: true),
+          CVField(title: 'Address', value: 'San Francisco, CA, USA', isCompulsory: true),
+          CVField(title: 'LinkedIn', value: 'linkedin.com/in/johndoe', isCompulsory: false),
+          CVField(title: 'GitHub', value: 'github.com/johndoe', isCompulsory: false),
+        ],
+      ),
+      education: [
+        Education(
+          institution: 'University of California, Berkeley',
+          degree: 'Bachelor of Science in Computer Science',
+          startDate: 'Aug 2015',
+          endDate: 'May 2019',
+          description: '[{"insert":"Graduated with Honors. Coursework included Data Structures, Algorithms, Database Systems, and Artificial Intelligence.\\n"}]',
+        ),
+      ],
+      experience: [
+        Experience(
+          company: 'Tech Solutions Inc.',
+          position: 'Software Engineer',
+          startDate: 'Jun 2019',
+          endDate: 'Present',
+          description: '[{"insert":"• Developed and maintained web applications using React and Node.js.\\n• Collaborated with cross-functional teams to define, design, and ship new features.\\n• Improved application performance by 30% through code optimization.\\n"}]',
+        ),
+        Experience(
+          company: 'InnovateTech',
+          position: 'Junior Developer',
+          startDate: 'Jan 2018',
+          endDate: 'May 2019',
+          description: '[{"insert":"• Assisted in the development of a mobile application using Flutter.\\n• Wrote unit and integration tests to ensure code quality.\\n• Participated in daily stand-ups and sprint planning meetings.\\n"}]',
+        ),
+      ],
+      internships: [
+        Internship(
+          company: 'Google',
+          position: 'Software Engineering Intern',
+          startDate: 'May 2018',
+          endDate: 'Aug 2018',
+          description: '[{"insert":"• Contributed to the development of internal tools using Python and Go.\\n• Participated in code reviews and team meetings.\\n"}]',
+        ),
+      ],
+      skills: [
+        Skill(name: 'Dart & Flutter'),
+        Skill(name: 'JavaScript / TypeScript'),
+        Skill(name: 'React & Node.js'),
+        Skill(name: 'Python & Django'),
+        Skill(name: 'Git & GitHub'),
+        Skill(name: 'Agile Methodologies'),
+      ],
+      certifications: [
+        Certification(
+          title: 'AWS Certified Solutions Architect',
+          issuer: 'Amazon Web Services',
+          date: 'Oct 2021',
+          description: '[{"insert":"Demonstrated expertise in designing distributed systems on AWS.\\n"}]',
+          isCompleted: true,
+        ),
+      ],
+      references: [
+        Reference(
+          name: 'Jane Smith',
+          position: 'Engineering Manager',
+          company: 'Tech Solutions Inc.',
+          email: 'jane.smith@example.com',
+          phone: '+1 (555) 987-6543',
+        ),
+      ],
+    );
+  }
 
   // --- Section Titles ---
   void updateSectionTitles(SectionTitles titles) {
