@@ -208,7 +208,7 @@ class CVData {
     this.baseFontSize = 10.0,
     this.lineHeight = 1.0,
     this.primaryColorHex = '#0D47A1',
-    this.fontFamily = 'Roboto',
+    this.fontFamily = 'Poppins',
     this.pdfFileName = '',
     this.templateId = 'default',
 

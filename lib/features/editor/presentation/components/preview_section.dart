@@ -234,9 +234,7 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
             enabled: false,
             child: Text('BUNDLED (OFFLINE SAFE)', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.blue)),
           ),
-          {'name': 'BundledRoboto', 'label': 'Roboto'},
           {'name': 'BundledPoppins', 'label': 'Poppins'},
-          {'name': 'BundledGaramond', 'label': 'Garamond'},
           {'name': 'BundledTinos', 'label': 'Times New Roman'},
           const PopupMenuDivider(),
           const PopupMenuItem<String>(
@@ -251,6 +249,7 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
           {'name': 'Lato', 'label': 'Lato'},
           {'name': 'Noto Sans', 'label': 'Noto Sans'},
           {'name': 'Noto Serif', 'label': 'Noto Serif'},
+          {'name': 'Roboto', 'label': 'Roboto'},
           {'name': 'Source Sans 3', 'label': 'Trebuchet'},
         ].map<PopupMenuEntry<String>>((f) {
           if (f is PopupMenuEntry<String>) return f;
@@ -544,10 +543,9 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
 
   TextStyle _getFontItemStyle(String value) {
     String family = value;
-    if (value == 'Roboto') family = 'BundledRoboto';
-    if (value == 'Poppins') family = 'BundledPoppins';
-    if (value == 'EBGaramond') family = 'BundledGaramond';
-    if (value == 'Tinos') family = 'BundledTinos';
+    if (value == 'Poppins' || value == 'BundledPoppins') family = 'BundledPoppins';
+    if (value == 'Tinos' || value == 'BundledTinos') family = 'BundledTinos';
+    if (value == 'Roboto') family = 'Roboto';
 
     if (family.startsWith('Bundled')) {
       return TextStyle(fontFamily: family, fontSize: 13);

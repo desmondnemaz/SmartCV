@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 class TemplateUtils {
@@ -41,8 +42,16 @@ class TemplateUtils {
             
             for (int i = 0; i < parts.length; i++) {
               if (parts[i].isNotEmpty) {
-                // Add remaining text before the newline
-                currentSpans.add(buildSpan(parts[i], attributes, regular, bold, italic, boldItalic, bodySize, lh));
+                String text = parts[i];
+                // Support manual bullets by detecting the character and stripping it
+                if (text.trimLeft().startsWith('•')) {
+                  isBullet = true;
+                  text = text.trimLeft().substring(1).trimLeft();
+                }
+                
+                if (text.isNotEmpty) {
+                  currentSpans.add(buildSpan(text, attributes, regular, bold, italic, boldItalic, bodySize, lh));
+                }
               }
 
               // The newline itself often carries attributes for the whole line in Quill (like list or header)
@@ -83,17 +92,33 @@ class TemplateUtils {
                     textAlign: alignment,
                   );
 
-                  if (isBullet || isOrdered) {
-                    final prefix = isBullet ? '•' : '$listIndex.';
-                    if (isOrdered) {
-                      listIndex++;
-                    }
+                  if (isBullet) {
+                    widgets.add(pw.Row(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Padding(
+                          padding: pw.EdgeInsets.only(right: 8, top: bodySize * 0.45),
+                          child: pw.Container(
+                            width: bodySize * 0.35,
+                            height: bodySize * 0.35,
+                            decoration: const pw.BoxDecoration(
+                              color: PdfColors.black,
+                              shape: pw.BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                        pw.Expanded(child: richText),
+                      ],
+                    ));
+                  } else if (isOrdered) {
+                    final prefix = '$listIndex.';
+                    listIndex++;
                     
                     widgets.add(pw.Row(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
                         pw.Padding(
-                          padding: pw.EdgeInsets.only(right: 8, top: 2 * lh),
+                          padding: pw.EdgeInsets.only(right: 8),
                           child: pw.Text(prefix, style: pw.TextStyle(
                             fontSize: bodySize, 
                             font: regular,

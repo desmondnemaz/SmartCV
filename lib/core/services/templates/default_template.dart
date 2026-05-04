@@ -388,10 +388,21 @@ class DefaultTemplate implements CVTemplate {
       runSpacing: 4 * lh,
       children: skillNames
           .map(
-            (s) => pw.Text('• $s', style: pw.TextStyle(
-              fontSize: bodySize,
-              lineSpacing: bodySize * (lh - 1.0),
-            )),
+            (s) => pw.Row(
+              mainAxisSize: pw.MainAxisSize.min,
+              children: [
+                pw.Container(
+                  width: bodySize * 0.3,
+                  height: bodySize * 0.3,
+                  decoration: const pw.BoxDecoration(color: PdfColors.black, shape: pw.BoxShape.circle),
+                ),
+                pw.SizedBox(width: 4),
+                pw.Text(s, style: pw.TextStyle(
+                  fontSize: bodySize,
+                  lineSpacing: bodySize * (lh - 1.0),
+                )),
+              ],
+            ),
           )
           .toList(),
     );

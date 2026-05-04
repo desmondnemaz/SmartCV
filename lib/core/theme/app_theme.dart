@@ -115,15 +115,14 @@ class AppTheme {
           color: isDark ? Colors.white : const Color(0xFF212121),
         ),
         // bodyMedium used for most standard text fields and descriptors.
-        // Using Roboto for body text for better readability.
         bodyMedium: TextStyle(
-          fontFamily: 'BundledRoboto',
+          fontFamily: 'BundledPoppins',
           color: isDark ? Colors.grey.shade300 : const Color(0xFF212121),
           fontSize: 15,
         ),
         // bodySmall used for subtitles or less prominent info.
         bodySmall: TextStyle(
-          fontFamily: 'BundledRoboto',
+          fontFamily: 'BundledPoppins',
           color: isDark ? Colors.grey.shade400 : const Color(0xFF757575),
           fontSize: 13,
         ),

@@ -39,14 +39,14 @@ class CVProvider with ChangeNotifier {
           position: 'Software Engineer',
           startDate: 'Jun 2019',
           endDate: 'Present',
-          description: '[{"insert":"• Developed and maintained web applications using React and Node.js.\\n• Collaborated with cross-functional teams to define, design, and ship new features.\\n• Improved application performance by 30% through code optimization.\\n"}]',
+          description: '[{"insert":"Developed and maintained web applications using React and Node.js."},{"attributes":{"list":"bullet"},"insert":"\\n"},{"insert":"Collaborated with cross-functional teams to define, design, and ship new features."},{"attributes":{"list":"bullet"},"insert":"\\n"},{"insert":"Improved application performance by 30% through code optimization."},{"attributes":{"list":"bullet"},"insert":"\\n"}]',
         ),
         Experience(
           company: 'InnovateTech',
           position: 'Junior Developer',
           startDate: 'Jan 2018',
           endDate: 'May 2019',
-          description: '[{"insert":"• Assisted in the development of a mobile application using Flutter.\\n• Wrote unit and integration tests to ensure code quality.\\n• Participated in daily stand-ups and sprint planning meetings.\\n"}]',
+          description: '[{"insert":"Assisted in the development of a mobile application using Flutter."},{"attributes":{"list":"bullet"},"insert":"\\n"},{"insert":"Wrote unit and integration tests to ensure code quality."},{"attributes":{"list":"bullet"},"insert":"\\n"},{"insert":"Participated in daily stand-ups and sprint planning meetings."},{"attributes":{"list":"bullet"},"insert":"\\n"}]',
         ),
       ],
       internships: [
@@ -55,7 +55,7 @@ class CVProvider with ChangeNotifier {
           position: 'Software Engineering Intern',
           startDate: 'May 2018',
           endDate: 'Aug 2018',
-          description: '[{"insert":"• Contributed to the development of internal tools using Python and Go.\\n• Participated in code reviews and team meetings.\\n"}]',
+          description: '[{"insert":"Contributed to the development of internal tools using Python and Go."},{"attributes":{"list":"bullet"},"insert":"\\n"},{"insert":"Participated in code reviews and team meetings."},{"attributes":{"list":"bullet"},"insert":"\\n"}]',
         ),
       ],
       skills: [
