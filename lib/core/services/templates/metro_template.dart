@@ -188,7 +188,7 @@ class MetroTemplate implements CVTemplate {
       runSpacing: 4 * lh,
       children: infoFields.map((field) {
         return pw.Text(
-          '${field.value}', // In Metro, often just values are shown (no labels)
+          field.value, // In Metro, often just values are shown (no labels)
           style: pw.TextStyle(
             fontSize: sizes['body'],
             color: CVTheme.textColor,

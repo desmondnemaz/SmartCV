@@ -8,11 +8,24 @@ import 'core/theme/app_theme.dart';
 import 'features/editor/presentation/providers/cv_provider.dart';
 import 'features/settings/presentation/providers/theme_provider.dart';
 import 'features/dashboard/presentation/screens/home_screen.dart';
+import 'core/services/pdf_service.dart';
 
 
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
+  // Perform initialization while the splash screen is visible
+  try {
+    // Warm up the font cache (pre-loads BundledPoppins)
+    await PDFService.init();
+  } catch (e) {
+    debugPrint('Initialization error: $e');
+  }
+
+  // Add a deliberate delay to ensure the splash screen is seen and 
+  // the app feels stable on entry (e.g., 2 seconds total)
+  await Future.delayed(const Duration(milliseconds: 2000));
 
   runApp(
     MultiProvider(
@@ -24,11 +37,7 @@ void main() async {
     ),
   );
 
-  // Use addPostFrameCallback to ensure the splash screen is removed only after
-  // the first frame is rendered. This is more robust than calling it immediately.
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    FlutterNativeSplash.remove();
-  });
+  FlutterNativeSplash.remove();
 }
 
 

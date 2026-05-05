@@ -13,8 +13,13 @@ class PDFService {
   static pw.Font? _fontBold;
   static pw.Font? _fontItalic;
   static pw.Font? _fontBoldItalic;
+ 
+  static Future<void> init() async {
+    // Pre-load the default font during app initialization (splash screen)
+    await _loadFonts('BundledPoppins');
+  }
 
-  static Future<pw.Font> _loadFontSafe(Future<pw.Font> Function() onlineProvider, String? assetPath, {bool preferAsset = true}) async {
+  static Future<pw.Font> _loadFontSafe(Future<pw.Font> Function() onlineProvider, String? assetPath) async {
     // 1. Try Asset first if provided (always prefer asset for speed/offline)
     if (assetPath != null) {
       try {
