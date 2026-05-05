@@ -6,6 +6,8 @@ import 'package:smartcv_builder/core/services/templates/cv_template.dart';
 import 'package:smartcv_builder/core/services/templates/default_template.dart';
 import 'package:smartcv_builder/core/services/templates/modern_template.dart';
 import 'package:smartcv_builder/core/services/templates/metro_template.dart';
+import 'package:smartcv_builder/core/services/templates/executive_template.dart';
+import 'package:smartcv_builder/core/services/templates/creative_template.dart';
 
 class PDFService {
   static String? _currentFontFamily;
@@ -171,6 +173,12 @@ class PDFService {
         break;
       case 'modern':
         template = ModernTemplate();
+        break;
+      case 'executive':
+        template = ExecutiveTemplate();
+        break;
+      case 'creative':
+        template = CreativeTemplate();
         break;
       case 'default':
       default:

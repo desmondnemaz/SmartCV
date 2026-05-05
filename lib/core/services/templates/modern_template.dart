@@ -38,7 +38,7 @@ class ModernTemplate implements CVTemplate {
           }
           if (data.sectionTitles.showSkills && data.skills.isNotEmpty) {
             leftColWidgets.add(_buildSectionTitle(data.sectionTitles.skills, sizes, lh, primaryColor));
-            leftColWidgets.add(_buildSkillsList(data.skills, sizes['body']!, lh));
+            leftColWidgets.add(_buildSkillsList(data.skills, sizes['body'] ?? 10.0, lh));
             leftColWidgets.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
           }
           if (data.sectionTitles.showCertifications && data.certifications.isNotEmpty) {
@@ -55,7 +55,7 @@ class ModernTemplate implements CVTemplate {
           // --- RIGHT COLUMN CONTENT ---
           if (data.sectionTitles.showProfessionalSummary && data.personalInfo.profileSummary.isNotEmpty) {
             rightColWidgets.add(_buildSectionTitle(data.sectionTitles.professionalSummary, sizes, lh, primaryColor));
-            rightColWidgets.addAll(TemplateUtils.buildRichText(data.personalInfo.profileSummary, regular, bold, italic, boldItalic, sizes['body']!, lh));
+            rightColWidgets.addAll(TemplateUtils.buildRichText(data.personalInfo.profileSummary, regular, bold, italic, boldItalic, sizes['body'] ?? 10.0, lh));
             rightColWidgets.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
           }
           if (data.sectionTitles.showExperience && data.experience.isNotEmpty) {
@@ -82,7 +82,7 @@ class ModernTemplate implements CVTemplate {
                 final custom = data.customSections[customIndex];
                 if (custom.isVisible && custom.description.isNotEmpty) {
                   rightColWidgets.add(_buildSectionTitle(custom.title, sizes, lh, primaryColor));
-                  rightColWidgets.addAll(TemplateUtils.buildRichText(custom.description, regular, bold, italic, boldItalic, sizes['body']!, lh));
+                  rightColWidgets.addAll(TemplateUtils.buildRichText(custom.description, regular, bold, italic, boldItalic, sizes['body'] ?? 10.0, lh));
                   rightColWidgets.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
               }
@@ -99,7 +99,7 @@ class ModernTemplate implements CVTemplate {
                 children: [
                   pw.Partition(
                     width: 170, // Left column width
-                    child: pw.Container(
+                    child: pw.Padding(
                       padding: const pw.EdgeInsets.only(right: 20),
                       child: pw.Column(
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -137,7 +137,7 @@ class ModernTemplate implements CVTemplate {
           pw.Text(
             info.showNameAsHeader ? info.fullName.toUpperCase() : 'CURRICULUM VITAE',
             style: pw.TextStyle(
-              fontSize: sizes['headerTitle']! + 8, // Make name bigger in modern
+              fontSize: (sizes['headerTitle'] ?? 20.0) + 8, // Make name bigger in modern
               fontWeight: pw.FontWeight.bold,
               color: PdfColors.white,
               letterSpacing: 2,
@@ -148,7 +148,7 @@ class ModernTemplate implements CVTemplate {
             pw.Text(
               info.jobTitle.toUpperCase(),
               style: pw.TextStyle(
-                fontSize: sizes['headerJobTitle'],
+                fontSize: sizes['headerJobTitle'] ?? 14.0,
                 color: PdfColors.white,
                 letterSpacing: 1.5,
               ),
@@ -168,7 +168,7 @@ class ModernTemplate implements CVTemplate {
           pw.Text(
             title.toUpperCase(),
             style: pw.TextStyle(
-              fontSize: sizes['sectionTitle'],
+              fontSize: sizes['sectionTitle'] ?? 16.0,
               fontWeight: pw.FontWeight.bold,
               color: primaryColor,
             ),
@@ -205,7 +205,7 @@ class ModernTemplate implements CVTemplate {
                   field.title.toUpperCase(),
                   style: pw.TextStyle(
                     fontWeight: pw.FontWeight.bold, 
-                    fontSize: sizes['fieldLabel']! - 1,
+                    fontSize: (sizes['fieldLabel'] ?? 10.0) - 1,
                     color: PdfColors.grey600,
                   ),
                 ),
@@ -213,7 +213,7 @@ class ModernTemplate implements CVTemplate {
                 pw.Text(
                   field.value,
                   style: pw.TextStyle(
-                    fontSize: sizes['fieldValue'],
+                    fontSize: sizes['fieldValue'] ?? 10.0,
                     color: CVTheme.textColor,
                   ),
                 ),
@@ -235,7 +235,7 @@ class ModernTemplate implements CVTemplate {
             exp.position,
             style: pw.TextStyle(
               fontWeight: pw.FontWeight.bold, 
-              fontSize: sizes['itemTitle'],
+              fontSize: sizes['itemTitle'] ?? 14.0,
             ),
           ),
           pw.SizedBox(height: 2),
@@ -246,20 +246,20 @@ class ModernTemplate implements CVTemplate {
                 exp.company,
                 style: pw.TextStyle(
                   color: PdfColors.grey700,
-                  fontSize: sizes['itemText'],
+                  fontSize: sizes['itemText'] ?? 11.0,
                 ),
               ),
               pw.Text(
                 '${exp.startDate} - ${exp.endDate}',
                 style: pw.TextStyle(
                   color: PdfColors.grey500, 
-                  fontSize: sizes['fieldLabel'],
+                  fontSize: sizes['fieldLabel'] ?? 10.0,
                 ),
               ),
             ],
           ),
           pw.SizedBox(height: 6 * lh),
-          ...TemplateUtils.buildRichText(exp.description, regular, bold, italic, boldItalic, sizes['body']!, lh),
+          ...TemplateUtils.buildRichText(exp.description, regular, bold, italic, boldItalic, sizes['body'] ?? 10.0, lh),
         ],
       ),
     );
@@ -275,7 +275,7 @@ class ModernTemplate implements CVTemplate {
             internship.position,
             style: pw.TextStyle(
               fontWeight: pw.FontWeight.bold, 
-              fontSize: sizes['itemTitle'],
+              fontSize: sizes['itemTitle'] ?? 14.0,
             ),
           ),
           pw.SizedBox(height: 2),
@@ -286,20 +286,20 @@ class ModernTemplate implements CVTemplate {
                 internship.company,
                 style: pw.TextStyle(
                   color: PdfColors.grey700,
-                  fontSize: sizes['itemText'],
+                  fontSize: sizes['itemText'] ?? 11.0,
                 ),
               ),
               pw.Text(
                 '${internship.startDate} - ${internship.endDate}',
                 style: pw.TextStyle(
                   color: PdfColors.grey500, 
-                  fontSize: sizes['fieldLabel'],
+                  fontSize: sizes['fieldLabel'] ?? 10.0,
                 ),
               ),
             ],
           ),
           pw.SizedBox(height: 6 * lh),
-          ...TemplateUtils.buildRichText(internship.description, regular, bold, italic, boldItalic, sizes['body']!, lh),
+          ...TemplateUtils.buildRichText(internship.description, regular, bold, italic, boldItalic, sizes['body'] ?? 10.0, lh),
         ],
       ),
     );
@@ -315,7 +315,7 @@ class ModernTemplate implements CVTemplate {
             ed.degree,
             style: pw.TextStyle(
               fontWeight: pw.FontWeight.bold, 
-              fontSize: sizes['itemTitle'],
+              fontSize: sizes['itemTitle'] ?? 14.0,
             ),
           ),
           pw.SizedBox(height: 2),
@@ -326,21 +326,21 @@ class ModernTemplate implements CVTemplate {
                 ed.institution,
                 style: pw.TextStyle(
                   color: PdfColors.grey700,
-                  fontSize: sizes['itemText'],
+                  fontSize: sizes['itemText'] ?? 11.0,
                 ),
               ),
               pw.Text(
                 '${ed.startDate} - ${ed.endDate}',
                 style: pw.TextStyle(
                   color: PdfColors.grey500, 
-                  fontSize: sizes['fieldLabel'],
+                  fontSize: sizes['fieldLabel'] ?? 10.0,
                 ),
               ),
             ],
           ),
           if (ed.description.isNotEmpty) ...[
             pw.SizedBox(height: 6 * lh),
-            ...TemplateUtils.buildRichText(ed.description, regular, bold, italic, boldItalic, sizes['body']!, lh),
+            ...TemplateUtils.buildRichText(ed.description, regular, bold, italic, boldItalic, sizes['body'] ?? 10.0, lh),
           ]
         ],
       ),
@@ -378,7 +378,7 @@ class ModernTemplate implements CVTemplate {
             cert.title + (!cert.isCompleted ? ' (In Progress)' : ''),
             style: pw.TextStyle(
               fontWeight: pw.FontWeight.bold, 
-              fontSize: sizes['itemTitle'],
+              fontSize: sizes['itemTitle'] ?? 14.0,
             ),
           ),
           pw.SizedBox(height: 2),
@@ -386,12 +386,12 @@ class ModernTemplate implements CVTemplate {
             '${cert.issuer} | ${cert.date}',
             style: pw.TextStyle(
               color: PdfColors.grey600,
-              fontSize: sizes['fieldLabel'],
+              fontSize: sizes['fieldLabel'] ?? 10.0,
             ),
           ),
           if (cert.description.isNotEmpty) ...[
             pw.SizedBox(height: 4 * lh),
-            ...TemplateUtils.buildRichText(cert.description, regular, bold, italic, boldItalic, sizes['body']!, lh),
+            ...TemplateUtils.buildRichText(cert.description, regular, bold, italic, boldItalic, sizes['body'] ?? 10.0, lh),
           ]
         ],
       ),
@@ -408,7 +408,7 @@ class ModernTemplate implements CVTemplate {
             ref.name,
             style: pw.TextStyle(
               fontWeight: pw.FontWeight.bold, 
-              fontSize: sizes['itemTitle'],
+              fontSize: sizes['itemTitle'] ?? 14.0,
             ),
           ),
           pw.SizedBox(height: 2),
@@ -416,14 +416,14 @@ class ModernTemplate implements CVTemplate {
             '${ref.position} | ${ref.company}',
             style: pw.TextStyle(
               color: PdfColors.grey700,
-              fontSize: sizes['itemText'],
+              fontSize: sizes['itemText'] ?? 11.0,
             ),
           ),
           pw.SizedBox(height: 2),
           if (ref.email.isNotEmpty) 
-            pw.Text(ref.email, style: pw.TextStyle(fontSize: sizes['body'], color: PdfColors.grey600)),
+            pw.Text(ref.email, style: pw.TextStyle(fontSize: sizes['body'] ?? 10.0, color: PdfColors.grey600)),
           if (ref.phone.isNotEmpty)
-            pw.Text(ref.phone, style: pw.TextStyle(fontSize: sizes['body'], color: PdfColors.grey600)),
+            pw.Text(ref.phone, style: pw.TextStyle(fontSize: sizes['body'] ?? 10.0, color: PdfColors.grey600)),
         ],
       ),
     );

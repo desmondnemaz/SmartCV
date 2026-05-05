@@ -50,7 +50,7 @@ class DefaultTemplate implements CVTemplate {
                 final custom = data.customSections[customIndex];
                 if (custom.isVisible && custom.description.isNotEmpty) {
                   content.add(_buildSectionTitle(custom.title, sizes, lh, primaryColor));
-                  content.addAll(TemplateUtils.buildRichText(custom.description, regular, bold, italic, boldItalic, sizes['body']!, lh));
+                  content.addAll(TemplateUtils.buildRichText(custom.description, regular, bold, italic, boldItalic, sizes['body'] ?? 10.0, lh));
                   content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
               }
@@ -67,7 +67,7 @@ class DefaultTemplate implements CVTemplate {
               case 'professionalSummary':
                 if (data.sectionTitles.showProfessionalSummary && data.personalInfo.profileSummary.isNotEmpty) {
                   content.add(_buildSectionTitle(data.sectionTitles.professionalSummary, sizes, lh, primaryColor));
-                  content.addAll(TemplateUtils.buildRichText(data.personalInfo.profileSummary, regular, bold, italic, boldItalic, sizes['body']!, lh));
+                  content.addAll(TemplateUtils.buildRichText(data.personalInfo.profileSummary, regular, bold, italic, boldItalic, sizes['body'] ?? 10.0, lh));
                   content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
                 break;
@@ -95,7 +95,7 @@ class DefaultTemplate implements CVTemplate {
               case 'skills':
                 if (data.sectionTitles.showSkills && data.skills.isNotEmpty) {
                   content.add(_buildSectionTitle(data.sectionTitles.skills, sizes, lh, primaryColor));
-                  content.add(_buildSkillsList(data.skills, sizes['body']!, lh));
+                  content.add(_buildSkillsList(data.skills, sizes['body'] ?? 10.0, lh));
                   content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
                 break;
@@ -151,11 +151,11 @@ class DefaultTemplate implements CVTemplate {
               pw.Text(
                 info.showNameAsHeader ? info.fullName.toUpperCase() : 'CURRICULUM VITAE',
                 style: pw.TextStyle(
-                  fontSize: sizes['headerTitle'],
+                  fontSize: sizes['headerTitle'] ?? 20.0,
                   fontWeight: pw.FontWeight.bold,
                   color: primaryColor,
                   letterSpacing: 2,
-                  lineSpacing: sizes['headerTitle']! * (lh - 1.0),
+                  lineSpacing: (sizes['headerTitle'] ?? 20.0) * (lh - 1.0),
                 ),
               ),
               if (info.jobTitle.isNotEmpty) ...[
@@ -163,9 +163,9 @@ class DefaultTemplate implements CVTemplate {
                 pw.Text(
                   info.jobTitle.toUpperCase(),
                   style: pw.TextStyle(
-                    fontSize: sizes['headerJobTitle'],
+                    fontSize: sizes['headerJobTitle'] ?? 14.0,
                     color: primaryColor,
-                    lineSpacing: sizes['headerJobTitle']! * (lh - 1.0),
+                    lineSpacing: (sizes['headerJobTitle'] ?? 14.0) * (lh - 1.0),
                   ),
                 ),
               ],
@@ -201,9 +201,9 @@ class DefaultTemplate implements CVTemplate {
                     field.title,
                     style: pw.TextStyle(
                       fontWeight: pw.FontWeight.bold, 
-                      fontSize: sizes['fieldLabel'],
+                      fontSize: sizes['fieldLabel'] ?? 10.0,
                       color: CVTheme.textColor,
-                      lineSpacing: sizes['fieldLabel']! * (lh - 1.0),
+                      lineSpacing: (sizes['fieldLabel'] ?? 10.0) * (lh - 1.0),
                     ),
                   ),
                 ),
@@ -212,9 +212,9 @@ class DefaultTemplate implements CVTemplate {
                   child: pw.Text(
                     field.value,
                     style: pw.TextStyle(
-                      fontSize: sizes['fieldValue'],
+                      fontSize: sizes['fieldValue'] ?? 10.0,
                       color: CVTheme.textColor,
-                      lineSpacing: sizes['fieldValue']! * (lh - 1.0),
+                      lineSpacing: (sizes['fieldValue'] ?? 10.0) * (lh - 1.0),
                     ),
                   ),
                 ),
@@ -234,10 +234,10 @@ class DefaultTemplate implements CVTemplate {
           pw.Text(
             title.toUpperCase(),
             style: pw.TextStyle(
-              fontSize: sizes['sectionTitle'],
+              fontSize: sizes['sectionTitle'] ?? 16.0,
               fontWeight: pw.FontWeight.bold,
               color: primaryColor,
-              lineSpacing: sizes['sectionTitle']! * (lh - 1.0),
+              lineSpacing: (sizes['sectionTitle'] ?? 16.0) * (lh - 1.0),
             ),
           ),
           pw.SizedBox(height: 1 * lh),
@@ -261,16 +261,16 @@ class DefaultTemplate implements CVTemplate {
                 exp.position,
                 style: pw.TextStyle(
                   fontWeight: pw.FontWeight.bold, 
-                  fontSize: sizes['itemTitle'],
-                  lineSpacing: sizes['itemTitle']! * (lh - 1.0),
+                  fontSize: sizes['itemTitle'] ?? 14.0,
+                  lineSpacing: (sizes['itemTitle'] ?? 14.0) * (lh - 1.0),
                 ),
               ),
               pw.Text(
                 '${exp.startDate} - ${exp.endDate}',
                 style: pw.TextStyle(
                   color: CVTheme.lightTextColor, 
-                  fontSize: sizes['fieldLabel'],
-                  lineSpacing: sizes['fieldLabel']! * (lh - 1.0),
+                  fontSize: sizes['fieldLabel'] ?? 10.0,
+                  lineSpacing: (sizes['fieldLabel'] ?? 10.0) * (lh - 1.0),
                 ),
               ),
             ],
@@ -280,12 +280,12 @@ class DefaultTemplate implements CVTemplate {
             style: pw.TextStyle(
               fontStyle: pw.FontStyle.italic,
               color: CVTheme.secondaryColor,
-              fontSize: sizes['itemText'],
-              lineSpacing: sizes['itemText']! * (lh - 1.0),
+              fontSize: sizes['itemText'] ?? 11.0,
+              lineSpacing: (sizes['itemText'] ?? 11.0) * (lh - 1.0),
             ),
           ),
           pw.SizedBox(height: 4 * lh),
-          ...TemplateUtils.buildRichText(exp.description, regular, bold, italic, boldItalic, sizes['body']!, lh),
+          ...TemplateUtils.buildRichText(exp.description, regular, bold, italic, boldItalic, sizes['body'] ?? 10.0, lh),
         ],
       ),
     );
@@ -304,16 +304,16 @@ class DefaultTemplate implements CVTemplate {
                 internship.position,
                 style: pw.TextStyle(
                   fontWeight: pw.FontWeight.bold, 
-                  fontSize: sizes['itemTitle'],
-                  lineSpacing: sizes['itemTitle']! * (lh - 1.0),
+                  fontSize: sizes['itemTitle'] ?? 14.0,
+                  lineSpacing: (sizes['itemTitle'] ?? 14.0) * (lh - 1.0),
                 ),
               ),
               pw.Text(
                 '${internship.startDate} - ${internship.endDate}',
                 style: pw.TextStyle(
                   color: CVTheme.lightTextColor, 
-                  fontSize: sizes['fieldLabel'],
-                  lineSpacing: sizes['fieldLabel']! * (lh - 1.0),
+                  fontSize: sizes['fieldLabel'] ?? 10.0,
+                  lineSpacing: (sizes['fieldLabel'] ?? 10.0) * (lh - 1.0),
                 ),
               ),
             ],
@@ -323,12 +323,12 @@ class DefaultTemplate implements CVTemplate {
             style: pw.TextStyle(
               fontStyle: pw.FontStyle.italic,
               color: CVTheme.secondaryColor,
-              fontSize: sizes['itemText'],
-              lineSpacing: sizes['itemText']! * (lh - 1.0),
+              fontSize: sizes['itemText'] ?? 11.0,
+              lineSpacing: (sizes['itemText'] ?? 11.0) * (lh - 1.0),
             ),
           ),
           pw.SizedBox(height: 4 * lh),
-          ...TemplateUtils.buildRichText(internship.description, regular, bold, italic, boldItalic, sizes['body']!, lh),
+          ...TemplateUtils.buildRichText(internship.description, regular, bold, italic, boldItalic, sizes['body'] ?? 10.0, lh),
         ],
       ),
     );
@@ -347,16 +347,16 @@ class DefaultTemplate implements CVTemplate {
                 ed.degree,
                 style: pw.TextStyle(
                   fontWeight: pw.FontWeight.bold, 
-                  fontSize: sizes['itemTitle'],
-                  lineSpacing: sizes['itemTitle']! * (lh - 1.0),
+                  fontSize: sizes['itemTitle'] ?? 14.0,
+                  lineSpacing: (sizes['itemTitle'] ?? 14.0) * (lh - 1.0),
                 ),
               ),
               pw.Text(
                 '${ed.startDate} - ${ed.endDate}',
                 style: pw.TextStyle(
                   color: CVTheme.lightTextColor, 
-                  fontSize: sizes['fieldLabel'],
-                  lineSpacing: sizes['fieldLabel']! * (lh - 1.0),
+                  fontSize: sizes['fieldLabel'] ?? 10.0,
+                  lineSpacing: (sizes['fieldLabel'] ?? 10.0) * (lh - 1.0),
                 ),
               ),
             ],
@@ -366,13 +366,13 @@ class DefaultTemplate implements CVTemplate {
             style: pw.TextStyle(
               fontStyle: pw.FontStyle.italic,
               color: CVTheme.secondaryColor,
-              fontSize: sizes['itemText'],
-              lineSpacing: sizes['itemText']! * (lh - 1.0),
+              fontSize: sizes['itemText'] ?? 11.0,
+              lineSpacing: (sizes['itemText'] ?? 11.0) * (lh - 1.0),
             ),
           ),
           if (ed.description.isNotEmpty) ...[
             pw.SizedBox(height: 4 * lh),
-            ...TemplateUtils.buildRichText(ed.description, regular, bold, italic, boldItalic, sizes['body']!, lh),
+            ...TemplateUtils.buildRichText(ed.description, regular, bold, italic, boldItalic, sizes['body'] ?? 10.0, lh),
           ]
         ],
       ),
@@ -425,8 +425,8 @@ class DefaultTemplate implements CVTemplate {
                         text: cert.title,
                         style: pw.TextStyle(
                           fontWeight: pw.FontWeight.bold, 
-                          fontSize: sizes['itemTitle'],
-                          lineSpacing: sizes['itemTitle']! * (lh - 1.0),
+                          fontSize: sizes['itemTitle'] ?? 14.0,
+                          lineSpacing: (sizes['itemTitle'] ?? 14.0) * (lh - 1.0),
                         ),
                       ),
                       if (!cert.isCompleted)
@@ -435,8 +435,8 @@ class DefaultTemplate implements CVTemplate {
                           style: pw.TextStyle(
                             fontStyle: pw.FontStyle.italic,
                             color: PdfColors.orange800,
-                            fontSize: sizes['fieldLabel'],
-                            lineSpacing: sizes['fieldLabel']! * (lh - 1.0),
+                            fontSize: sizes['fieldLabel'] ?? 10.0,
+                            lineSpacing: (sizes['fieldLabel'] ?? 10.0) * (lh - 1.0),
                           ),
                         ),
                     ],
@@ -447,8 +447,8 @@ class DefaultTemplate implements CVTemplate {
                 cert.date,
                 style: pw.TextStyle(
                   color: CVTheme.lightTextColor, 
-                  fontSize: sizes['fieldLabel'],
-                  lineSpacing: sizes['fieldLabel']! * (lh - 1.0),
+                  fontSize: sizes['fieldLabel'] ?? 10.0,
+                  lineSpacing: (sizes['fieldLabel'] ?? 10.0) * (lh - 1.0),
                 ),
               ),
             ],
@@ -458,13 +458,13 @@ class DefaultTemplate implements CVTemplate {
             style: pw.TextStyle(
               fontStyle: pw.FontStyle.italic,
               color: CVTheme.secondaryColor,
-              fontSize: sizes['itemText'],
-              lineSpacing: sizes['itemText']! * (lh - 1.0),
+              fontSize: sizes['itemText'] ?? 11.0,
+              lineSpacing: (sizes['itemText'] ?? 11.0) * (lh - 1.0),
             ),
           ),
           if (cert.description.isNotEmpty) ...[
             pw.SizedBox(height: 4 * lh),
-            ...TemplateUtils.buildRichText(cert.description, regular, bold, italic, boldItalic, sizes['body']!, lh),
+            ...TemplateUtils.buildRichText(cert.description, regular, bold, italic, boldItalic, sizes['body'] ?? 10.0, lh),
           ]
         ],
       ),
@@ -481,8 +481,8 @@ class DefaultTemplate implements CVTemplate {
             ref.name,
             style: pw.TextStyle(
               fontWeight: pw.FontWeight.bold, 
-              fontSize: sizes['itemTitle'],
-              lineSpacing: sizes['itemTitle']! * (lh - 1.0),
+              fontSize: sizes['itemTitle'] ?? 14.0,
+              lineSpacing: (sizes['itemTitle'] ?? 14.0) * (lh - 1.0),
             ),
           ),
           pw.Text(
@@ -490,26 +490,26 @@ class DefaultTemplate implements CVTemplate {
             style: pw.TextStyle(
               fontStyle: pw.FontStyle.italic,
               color: CVTheme.secondaryColor,
-              fontSize: sizes['itemText'],
-              lineSpacing: sizes['itemText']! * (lh - 1.0),
+              fontSize: sizes['itemText'] ?? 11.0,
+              lineSpacing: (sizes['itemText'] ?? 11.0) * (lh - 1.0),
             ),
           ),
           pw.Row(
             children: [
               if (ref.email.isNotEmpty) 
                 pw.Text('Email: ${ref.email}', style: pw.TextStyle(
-                  fontSize: sizes['body'],
-                  lineSpacing: sizes['body']! * (lh - 1.0),
+                  fontSize: sizes['body'] ?? 10.0,
+                  lineSpacing: (sizes['body'] ?? 10.0) * (lh - 1.0),
                 )),
               if (ref.email.isNotEmpty && ref.phone.isNotEmpty)
                 pw.Text(' | ', style: pw.TextStyle(
-                  fontSize: sizes['body'],
-                  lineSpacing: sizes['body']! * (lh - 1.0),
+                  fontSize: sizes['body'] ?? 10.0,
+                  lineSpacing: (sizes['body'] ?? 10.0) * (lh - 1.0),
                 )),
               if (ref.phone.isNotEmpty)
                 pw.Text('Phone: ${ref.phone}', style: pw.TextStyle(
-                  fontSize: sizes['body'],
-                  lineSpacing: sizes['body']! * (lh - 1.0),
+                  fontSize: sizes['body'] ?? 10.0,
+                  lineSpacing: (sizes['body'] ?? 10.0) * (lh - 1.0),
                 )),
             ],
           ),

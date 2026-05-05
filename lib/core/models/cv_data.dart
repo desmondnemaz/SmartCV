@@ -8,6 +8,18 @@ class CVField {
     this.value = '',
     this.isCompulsory = false,
   });
+
+  Map<String, dynamic> toJson() => {
+        'title': title,
+        'value': value,
+        'isCompulsory': isCompulsory,
+      };
+
+  factory CVField.fromJson(Map<String, dynamic> json) => CVField(
+        title: json['title'] ?? '',
+        value: json['value'] ?? '',
+        isCompulsory: json['isCompulsory'] ?? false,
+      );
 }
 
 class PersonalInfo {
@@ -30,6 +42,22 @@ class PersonalInfo {
           CVField(title: 'Address', isCompulsory: true),
         ];
 
+  Map<String, dynamic> toJson() => {
+        'jobTitle': jobTitle,
+        'headerAlignment': headerAlignment,
+        'fields': fields.map((e) => e.toJson()).toList(),
+        'profileSummary': profileSummary,
+        'showNameAsHeader': showNameAsHeader,
+      };
+
+  factory PersonalInfo.fromJson(Map<String, dynamic> json) => PersonalInfo(
+        jobTitle: json['jobTitle'] ?? '',
+        headerAlignment: json['headerAlignment'] ?? 'left',
+        fields: (json['fields'] as List?)?.map((e) => CVField.fromJson(e)).toList(),
+        profileSummary: json['profileSummary'] ?? '',
+        showNameAsHeader: json['showNameAsHeader'] ?? false,
+      );
+
   // Helper getters for compatibility if needed, though we should migrate
   String get fullName => fields.isNotEmpty ? fields[0].value : '';
   String get email => fields.length > 1 ? fields[1].value : '';
@@ -49,6 +77,22 @@ class Education {
     this.endDate = '',
     this.description = '',
   });
+
+  Map<String, dynamic> toJson() => {
+        'institution': institution,
+        'degree': degree,
+        'startDate': startDate,
+        'endDate': endDate,
+        'description': description,
+      };
+
+  factory Education.fromJson(Map<String, dynamic> json) => Education(
+        institution: json['institution'] ?? '',
+        degree: json['degree'] ?? '',
+        startDate: json['startDate'] ?? '',
+        endDate: json['endDate'] ?? '',
+        description: json['description'] ?? '',
+      );
 }
 
 class Experience {
@@ -65,6 +109,22 @@ class Experience {
     this.endDate = '',
     this.description = '',
   });
+
+  Map<String, dynamic> toJson() => {
+        'company': company,
+        'position': position,
+        'startDate': startDate,
+        'endDate': endDate,
+        'description': description,
+      };
+
+  factory Experience.fromJson(Map<String, dynamic> json) => Experience(
+        company: json['company'] ?? '',
+        position: json['position'] ?? '',
+        startDate: json['startDate'] ?? '',
+        endDate: json['endDate'] ?? '',
+        description: json['description'] ?? '',
+      );
 }
 
 class Internship {
@@ -81,6 +141,22 @@ class Internship {
     this.endDate = '',
     this.description = '',
   });
+
+  Map<String, dynamic> toJson() => {
+        'company': company,
+        'position': position,
+        'startDate': startDate,
+        'endDate': endDate,
+        'description': description,
+      };
+
+  factory Internship.fromJson(Map<String, dynamic> json) => Internship(
+        company: json['company'] ?? '',
+        position: json['position'] ?? '',
+        startDate: json['startDate'] ?? '',
+        endDate: json['endDate'] ?? '',
+        description: json['description'] ?? '',
+      );
 }
 
 class Reference {
@@ -97,6 +173,22 @@ class Reference {
     this.email = '',
     this.phone = '',
   });
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'position': position,
+        'company': company,
+        'email': email,
+        'phone': phone,
+      };
+
+  factory Reference.fromJson(Map<String, dynamic> json) => Reference(
+        name: json['name'] ?? '',
+        position: json['position'] ?? '',
+        company: json['company'] ?? '',
+        email: json['email'] ?? '',
+        phone: json['phone'] ?? '',
+      );
 }
 
 class Skill {
@@ -105,6 +197,12 @@ class Skill {
   Skill({
     this.name = '',
   });
+
+  Map<String, dynamic> toJson() => {'name': name};
+
+  factory Skill.fromJson(Map<String, dynamic> json) => Skill(
+        name: json['name'] ?? '',
+      );
 }
 
 class Certification {
@@ -121,6 +219,22 @@ class Certification {
     this.description = '',
     this.isCompleted = true,
   });
+
+  Map<String, dynamic> toJson() => {
+        'title': title,
+        'issuer': issuer,
+        'date': date,
+        'description': description,
+        'isCompleted': isCompleted,
+      };
+
+  factory Certification.fromJson(Map<String, dynamic> json) => Certification(
+        title: json['title'] ?? '',
+        issuer: json['issuer'] ?? '',
+        date: json['date'] ?? '',
+        description: json['description'] ?? '',
+        isCompleted: json['isCompleted'] ?? true,
+      );
 }
 
 class CustomSection {
@@ -135,6 +249,20 @@ class CustomSection {
     this.description = '',
     this.isVisible = true,
   });
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'title': title,
+        'description': description,
+        'isVisible': isVisible,
+      };
+
+  factory CustomSection.fromJson(Map<String, dynamic> json) => CustomSection(
+        id: json['id'] ?? '',
+        title: json['title'] ?? '',
+        description: json['description'] ?? '',
+        isVisible: json['isVisible'] ?? true,
+      );
 }
 
 class SectionTitles {
@@ -173,6 +301,44 @@ class SectionTitles {
     this.references = 'References',
     this.showReferences = true,
   });
+
+  Map<String, dynamic> toJson() => {
+        'personalInfo': personalInfo,
+        'showPersonalInfo': showPersonalInfo,
+        'professionalSummary': professionalSummary,
+        'showProfessionalSummary': showProfessionalSummary,
+        'experience': experience,
+        'showExperience': showExperience,
+        'internships': internships,
+        'showInternships': showInternships,
+        'education': education,
+        'showEducation': showEducation,
+        'skills': skills,
+        'showSkills': showSkills,
+        'certifications': certifications,
+        'showCertifications': showCertifications,
+        'references': references,
+        'showReferences': showReferences,
+      };
+
+  factory SectionTitles.fromJson(Map<String, dynamic> json) => SectionTitles(
+        personalInfo: json['personalInfo'] ?? 'Personal Information',
+        showPersonalInfo: json['showPersonalInfo'] ?? true,
+        professionalSummary: json['professionalSummary'] ?? 'Professional Summary',
+        showProfessionalSummary: json['showProfessionalSummary'] ?? true,
+        experience: json['experience'] ?? 'Experience',
+        showExperience: json['showExperience'] ?? true,
+        internships: json['internships'] ?? 'Internships',
+        showInternships: json['showInternships'] ?? true,
+        education: json['education'] ?? 'Education',
+        showEducation: json['showEducation'] ?? true,
+        skills: json['skills'] ?? 'Skills',
+        showSkills: json['showSkills'] ?? true,
+        certifications: json['certifications'] ?? 'Certifications',
+        showCertifications: json['showCertifications'] ?? true,
+        references: json['references'] ?? 'References',
+        showReferences: json['showReferences'] ?? true,
+      );
 }
 
 class CVData {
@@ -232,4 +398,42 @@ class CVData {
           'certifications',
           'references'
         ];
+
+  Map<String, dynamic> toJson() => {
+        'personalInfo': personalInfo.toJson(),
+        'sectionTitles': sectionTitles.toJson(),
+        'education': education.map((e) => e.toJson()).toList(),
+        'experience': experience.map((e) => e.toJson()).toList(),
+        'internships': internships.map((e) => e.toJson()).toList(),
+        'references': references.map((e) => e.toJson()).toList(),
+        'skills': skills.map((e) => e.toJson()).toList(),
+        'certifications': certifications.map((e) => e.toJson()).toList(),
+        'customSections': customSections.map((e) => e.toJson()).toList(),
+        'sectionOrder': sectionOrder,
+        'baseFontSize': baseFontSize,
+        'lineHeight': lineHeight,
+        'primaryColorHex': primaryColorHex,
+        'fontFamily': fontFamily,
+        'pdfFileName': pdfFileName,
+        'templateId': templateId,
+      };
+
+  factory CVData.fromJson(Map<String, dynamic> json) => CVData(
+        personalInfo: json['personalInfo'] != null ? PersonalInfo.fromJson(json['personalInfo']) : null,
+        sectionTitles: json['sectionTitles'] != null ? SectionTitles.fromJson(json['sectionTitles']) : null,
+        education: (json['education'] as List?)?.map((e) => Education.fromJson(e)).toList(),
+        experience: (json['experience'] as List?)?.map((e) => Experience.fromJson(e)).toList(),
+        internships: (json['internships'] as List?)?.map((e) => Internship.fromJson(e)).toList(),
+        references: (json['references'] as List?)?.map((e) => Reference.fromJson(e)).toList(),
+        skills: (json['skills'] as List?)?.map((e) => Skill.fromJson(e)).toList(),
+        certifications: (json['certifications'] as List?)?.map((e) => Certification.fromJson(e)).toList(),
+        customSections: (json['customSections'] as List?)?.map((e) => CustomSection.fromJson(e)).toList(),
+        sectionOrder: (json['sectionOrder'] as List?)?.map((e) => e as String).toList(),
+        baseFontSize: (json['baseFontSize'] as num?)?.toDouble() ?? 10.0,
+        lineHeight: (json['lineHeight'] as num?)?.toDouble() ?? 1.0,
+        primaryColorHex: json['primaryColorHex'] ?? '#0D47A1',
+        fontFamily: json['fontFamily'] ?? 'Poppins',
+        pdfFileName: json['pdfFileName'] ?? '',
+        templateId: json['templateId'] ?? 'default',
+      );
 }

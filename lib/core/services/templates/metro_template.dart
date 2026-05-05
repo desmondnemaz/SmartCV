@@ -50,7 +50,7 @@ class MetroTemplate implements CVTemplate {
                 final custom = data.customSections[customIndex];
                 if (custom.isVisible && custom.description.isNotEmpty) {
                   content.add(_buildSectionTitle(custom.title, sizes, lh, primaryColor));
-                  content.addAll(TemplateUtils.buildRichText(custom.description, regular, bold, italic, boldItalic, sizes['body']!, lh));
+                  content.addAll(TemplateUtils.buildRichText(custom.description, regular, bold, italic, boldItalic, sizes['body'] ?? 10.0, lh));
                   content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
               }
@@ -68,7 +68,7 @@ class MetroTemplate implements CVTemplate {
               case 'professionalSummary':
                 if (data.sectionTitles.showProfessionalSummary && data.personalInfo.profileSummary.isNotEmpty) {
                   content.add(_buildSectionTitle(data.sectionTitles.professionalSummary, sizes, lh, primaryColor));
-                  content.addAll(TemplateUtils.buildRichText(data.personalInfo.profileSummary, regular, bold, italic, boldItalic, sizes['body']!, lh));
+                  content.addAll(TemplateUtils.buildRichText(data.personalInfo.profileSummary, regular, bold, italic, boldItalic, sizes['body'] ?? 10.0, lh));
                   content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
                 break;
@@ -96,7 +96,7 @@ class MetroTemplate implements CVTemplate {
               case 'skills':
                 if (data.sectionTitles.showSkills && data.skills.isNotEmpty) {
                   content.add(_buildSectionTitle(data.sectionTitles.skills, sizes, lh, primaryColor));
-                  content.add(_buildSkillsList(data.skills, sizes['body']!, lh));
+                  content.add(_buildSkillsList(data.skills, sizes['body'] ?? 10.0, lh));
                   content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
                 break;
@@ -134,7 +134,7 @@ class MetroTemplate implements CVTemplate {
         pw.Text(
           info.showNameAsHeader ? info.fullName.toUpperCase() : 'CURRICULUM VITAE',
           style: pw.TextStyle(
-            fontSize: sizes['headerTitle']! + 4,
+            fontSize: (sizes['headerTitle'] ?? 20.0) + 4,
             fontWeight: pw.FontWeight.bold,
             color: primaryColor,
           ),
@@ -144,7 +144,7 @@ class MetroTemplate implements CVTemplate {
           pw.Text(
             info.jobTitle.toUpperCase(),
             style: pw.TextStyle(
-              fontSize: sizes['headerJobTitle'],
+              fontSize: sizes['headerJobTitle'] ?? 14.0,
               color: PdfColors.grey800,
             ),
           ),
@@ -168,7 +168,7 @@ class MetroTemplate implements CVTemplate {
       child: pw.Text(
         title.toUpperCase(),
         style: pw.TextStyle(
-          fontSize: sizes['sectionTitle'],
+          fontSize: sizes['sectionTitle'] ?? 16.0,
           fontWeight: pw.FontWeight.bold,
           color: PdfColors.white,
         ),
@@ -190,7 +190,7 @@ class MetroTemplate implements CVTemplate {
         return pw.Text(
           field.value, // In Metro, often just values are shown (no labels)
           style: pw.TextStyle(
-            fontSize: sizes['body'],
+            fontSize: sizes['body'] ?? 10.0,
             color: CVTheme.textColor,
           ),
         );
@@ -212,14 +212,14 @@ class MetroTemplate implements CVTemplate {
                 style: pw.TextStyle(
                   fontWeight: pw.FontWeight.bold, 
                   fontStyle: pw.FontStyle.italic,
-                  fontSize: sizes['itemTitle'],
+                  fontSize: sizes['itemTitle'] ?? 14.0,
                 ),
               ),
               pw.Text(
                 '${exp.startDate} - ${exp.endDate}',
                 style: pw.TextStyle(
                   color: PdfColors.grey700, 
-                  fontSize: sizes['fieldLabel'],
+                  fontSize: sizes['fieldLabel'] ?? 10.0,
                 ),
               ),
             ],
@@ -227,11 +227,11 @@ class MetroTemplate implements CVTemplate {
           pw.Text(
             exp.company,
             style: pw.TextStyle(
-              fontSize: sizes['itemText'],
+              fontSize: sizes['itemText'] ?? 11.0,
             ),
           ),
           pw.SizedBox(height: 4 * lh),
-          ...TemplateUtils.buildRichText(exp.description, regular, bold, italic, boldItalic, sizes['body']!, lh),
+          ...TemplateUtils.buildRichText(exp.description, regular, bold, italic, boldItalic, sizes['body'] ?? 10.0, lh),
         ],
       ),
     );
@@ -251,14 +251,14 @@ class MetroTemplate implements CVTemplate {
                 style: pw.TextStyle(
                   fontWeight: pw.FontWeight.bold, 
                   fontStyle: pw.FontStyle.italic,
-                  fontSize: sizes['itemTitle'],
+                  fontSize: sizes['itemTitle'] ?? 14.0,
                 ),
               ),
               pw.Text(
                 '${internship.startDate} - ${internship.endDate}',
                 style: pw.TextStyle(
                   color: PdfColors.grey700, 
-                  fontSize: sizes['fieldLabel'],
+                  fontSize: sizes['fieldLabel'] ?? 10.0,
                 ),
               ),
             ],
@@ -266,11 +266,11 @@ class MetroTemplate implements CVTemplate {
           pw.Text(
             internship.company,
             style: pw.TextStyle(
-              fontSize: sizes['itemText'],
+              fontSize: sizes['itemText'] ?? 11.0,
             ),
           ),
           pw.SizedBox(height: 4 * lh),
-          ...TemplateUtils.buildRichText(internship.description, regular, bold, italic, boldItalic, sizes['body']!, lh),
+          ...TemplateUtils.buildRichText(internship.description, regular, bold, italic, boldItalic, sizes['body'] ?? 10.0, lh),
         ],
       ),
     );
@@ -290,14 +290,14 @@ class MetroTemplate implements CVTemplate {
                 style: pw.TextStyle(
                   fontWeight: pw.FontWeight.bold, 
                   fontStyle: pw.FontStyle.italic,
-                  fontSize: sizes['itemTitle'],
+                  fontSize: sizes['itemTitle'] ?? 14.0,
                 ),
               ),
               pw.Text(
                 '${ed.startDate} - ${ed.endDate}',
                 style: pw.TextStyle(
                   color: PdfColors.grey700, 
-                  fontSize: sizes['fieldLabel'],
+                  fontSize: sizes['fieldLabel'] ?? 10.0,
                 ),
               ),
             ],
@@ -305,12 +305,12 @@ class MetroTemplate implements CVTemplate {
           pw.Text(
             ed.institution,
             style: pw.TextStyle(
-              fontSize: sizes['itemText'],
+              fontSize: sizes['itemText'] ?? 11.0,
             ),
           ),
           if (ed.description.isNotEmpty) ...[
             pw.SizedBox(height: 4 * lh),
-            ...TemplateUtils.buildRichText(ed.description, regular, bold, italic, boldItalic, sizes['body']!, lh),
+            ...TemplateUtils.buildRichText(ed.description, regular, bold, italic, boldItalic, sizes['body'] ?? 10.0, lh),
           ]
         ],
       ),
@@ -360,14 +360,14 @@ class MetroTemplate implements CVTemplate {
                 style: pw.TextStyle(
                   fontWeight: pw.FontWeight.bold, 
                   fontStyle: pw.FontStyle.italic,
-                  fontSize: sizes['itemTitle'],
+                  fontSize: sizes['itemTitle'] ?? 14.0,
                 ),
               ),
               pw.Text(
                 cert.date,
                 style: pw.TextStyle(
                   color: PdfColors.grey700, 
-                  fontSize: sizes['fieldLabel'],
+                  fontSize: sizes['fieldLabel'] ?? 10.0,
                 ),
               ),
             ],
@@ -375,12 +375,12 @@ class MetroTemplate implements CVTemplate {
           pw.Text(
             cert.issuer,
             style: pw.TextStyle(
-              fontSize: sizes['itemText'],
+              fontSize: sizes['itemText'] ?? 11.0,
             ),
           ),
           if (cert.description.isNotEmpty) ...[
             pw.SizedBox(height: 4 * lh),
-            ...TemplateUtils.buildRichText(cert.description, regular, bold, italic, boldItalic, sizes['body']!, lh),
+            ...TemplateUtils.buildRichText(cert.description, regular, bold, italic, boldItalic, sizes['body'] ?? 10.0, lh),
           ]
         ],
       ),
@@ -398,23 +398,23 @@ class MetroTemplate implements CVTemplate {
             style: pw.TextStyle(
               fontWeight: pw.FontWeight.bold, 
               fontStyle: pw.FontStyle.italic,
-              fontSize: sizes['itemTitle'],
+              fontSize: sizes['itemTitle'] ?? 14.0,
             ),
           ),
           pw.Text(
             '${ref.position} | ${ref.company}',
             style: pw.TextStyle(
-              fontSize: sizes['itemText'],
+              fontSize: sizes['itemText'] ?? 11.0,
             ),
           ),
           pw.Row(
             children: [
               if (ref.email.isNotEmpty) 
-                pw.Text(ref.email, style: pw.TextStyle(fontSize: sizes['body'])),
+                pw.Text(ref.email, style: pw.TextStyle(fontSize: sizes['body'] ?? 10.0)),
               if (ref.email.isNotEmpty && ref.phone.isNotEmpty)
-                pw.Text(' | ', style: pw.TextStyle(fontSize: sizes['body'])),
+                pw.Text(' | ', style: pw.TextStyle(fontSize: sizes['body'] ?? 10.0)),
               if (ref.phone.isNotEmpty)
-                pw.Text(ref.phone, style: pw.TextStyle(fontSize: sizes['body'])),
+                pw.Text(ref.phone, style: pw.TextStyle(fontSize: sizes['body'] ?? 10.0)),
             ],
           ),
         ],

@@ -31,7 +31,8 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
     {'id': 'default', 'name': 'Simple'},
     {'id': 'modern', 'name': 'Modern'},
     {'id': 'metro', 'name': 'Metro'},
-    {'id': 'horizontal', 'name': 'Horizontal'},
+    {'id': 'executive', 'name': 'Executive'},
+    {'id': 'creative', 'name': 'Creative'},
   ];
 
   @override
@@ -67,22 +68,38 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
     return Column(
       children: [
         Container(
-          height: 50,
-          color: Colors.grey.shade50,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                _buildLineHeightMenu(context),
-                Container(height: 24, width: 1, color: Colors.grey.shade300, margin: const EdgeInsets.symmetric(horizontal: 8)),
-                _buildFontSizeMenu(context),
-                const SizedBox(width: 8),
-                _buildFontFamilyMenu(context),
-                Container(height: 24, width: 1, color: Colors.grey.shade300, margin: const EdgeInsets.symmetric(horizontal: 8)),
-                _buildActionButtons(context),
-              ],
-            ),
+          height: 56,
+          color: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Row(
+            children: [
+              // Template Selector Toggle
+              _buildModernToolbarButton(
+                icon: Icons.dashboard_customize,
+                label: 'Layout',
+                onPressed: () => setState(() => _showTemplateSelector = !_showTemplateSelector),
+                isActive: _showTemplateSelector,
+              ),
+              const VerticalDivider(width: 20, indent: 15, endIndent: 15),
+              // Design/Style Settings
+              _buildModernToolbarButton(
+                icon: Icons.auto_awesome,
+                label: 'Style',
+                onPressed: () => _showStyleBottomSheet(context),
+              ),
+              const Spacer(),
+              // Primary Actions
+              _buildPrimaryActionButton(
+                icon: Icons.file_download,
+                label: 'Download',
+                color: Colors.blue.shade700,
+                onPressed: () async {
+                  final bytes = await PDFService.generateCV(_previewData);
+                  final name = _previewData.pdfFileName.isNotEmpty ? _previewData.pdfFileName : 'My_CV';
+                  await Printing.sharePdf(bytes: bytes, filename: '$name.pdf');
+                },
+              ),
+            ],
           ),
         ),
         const Divider(height: 1),
@@ -260,153 +277,171 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
     );
   }
 
-  Widget _buildActionButtons(BuildContext context) {
-    return Row(
-      children: [
-        IconButton(
-          icon: const Icon(Icons.file_download, size: 20, color: Colors.blue),
-          tooltip: 'Download CV',
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
-          onPressed: () async {
-            final bytes = await PDFService.generateCV(_previewData);
-            final name = _previewData.pdfFileName.isNotEmpty ? _previewData.pdfFileName : 'Untitled_CV';
-            await Printing.sharePdf(bytes: bytes, filename: '$name.pdf');
 
-          },
-        ),
-        const SizedBox(width: 12),
-        IconButton(
-          icon: const Icon(Icons.print, size: 20, color: Colors.blueGrey),
-          tooltip: 'Print CV',
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
-          onPressed: () async {
-            final bytes = await PDFService.generateCV(_previewData);
-            final name = _previewData.pdfFileName.isNotEmpty ? _previewData.pdfFileName : 'Untitled_CV';
-            await Printing.layoutPdf(onLayout: (format) => bytes, name: name);
-
-          },
-        ),
-        const SizedBox(width: 12),
-        IconButton(
-          icon: const Icon(Icons.fullscreen, size: 20, color: Colors.blueGrey),
-          tooltip: 'Full Screen',
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => FullScreenPreview(data: widget.data),
-              ),
-            );
-          },
-        ),
-        const SizedBox(width: 12),
-        IconButton(
-          icon: const Icon(Icons.palette, size: 20, color: Colors.indigo),
-          tooltip: 'Title Color',
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
-          onPressed: () => _showColorPicker(context),
-        ),
-      ],
-    );
-  }
 
   Widget _buildBottomToolbar(BuildContext context) {
     return Container(
-      height: 44,
+      height: 48,
       decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 4,
-            offset: const Offset(0, -2),
-          ),
-        ],
+        color: Colors.grey.shade50,
+        border: Border(top: BorderSide(color: Colors.grey.shade200)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          TextButton.icon(
-            icon: Icon(
-              _showTemplateSelector ? Icons.keyboard_arrow_down : Icons.view_carousel, 
-              size: 18, 
-              color: _showTemplateSelector ? Colors.blue : Colors.blueGrey
-            ),
-            label: Text(
-              'Templates', 
-              style: TextStyle(
-                color: _showTemplateSelector ? Colors.blue : Colors.blueGrey,
-                fontWeight: FontWeight.bold
-              )
-            ),
-            onPressed: () {
-              setState(() {
-                _showTemplateSelector = !_showTemplateSelector;
-              });
-            },
-            style: TextButton.styleFrom(
-              backgroundColor: _showTemplateSelector ? Colors.blue.withValues(alpha: 0.1) : Colors.transparent,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            ),
-          ),
-          Container(height: 16, width: 1, color: Colors.grey.shade300, margin: const EdgeInsets.symmetric(horizontal: 8)),
           IconButton(
-            icon: const Icon(Icons.zoom_out, size: 18, color: Colors.blueGrey),
-            onPressed: () {
-              setState(() {
-                _maxPageWidth = (_maxPageWidth - 100).clamp(300.0, 1500.0);
-              });
+            icon: const Icon(Icons.print_outlined, size: 20, color: Colors.blueGrey),
+            tooltip: 'Print',
+            onPressed: () async {
+              final bytes = await PDFService.generateCV(_previewData);
+              final name = _previewData.pdfFileName.isNotEmpty ? _previewData.pdfFileName : 'My_CV';
+              await Printing.layoutPdf(onLayout: (format) => bytes, name: name);
             },
           ),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 120,
-            child: SliderTheme(
-              data: SliderTheme.of(context).copyWith(
-                trackHeight: 3,
-                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
-                activeTrackColor: Colors.blue.shade400,
-                thumbColor: Colors.blue.shade600,
-              ),
-              child: Slider(
-                value: _maxPageWidth,
-                min: 300,
-                max: 1500,
-                onChanged: (val) {
-                  setState(() {
-                    _maxPageWidth = val;
-                  });
-                },
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          IconButton(
-            icon: const Icon(Icons.zoom_in, size: 18, color: Colors.blueGrey),
-            onPressed: () {
-              setState(() {
-                _maxPageWidth = (_maxPageWidth + 100).clamp(300.0, 1500.0);
-              });
-            },
-          ),
-          Container(height: 16, width: 1, color: Colors.grey.shade300, margin: const EdgeInsets.symmetric(horizontal: 12)),
+          const VerticalDivider(width: 24, indent: 12, endIndent: 12),
           Text(
-            '${((_maxPageWidth / 550) * 100).round()}%',
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.blueGrey),
+            'Preview Zoom: ${((_maxPageWidth / 550) * 100).round()}%',
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.blueGrey),
           ),
-          const SizedBox(width: 16),
-          TextButton(
+          const SizedBox(width: 8),
+          IconButton(
+            icon: const Icon(Icons.remove_circle_outline, size: 20),
+            onPressed: () => setState(() => _maxPageWidth = (_maxPageWidth - 100).clamp(300.0, 1500.0)),
+          ),
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline, size: 20),
+            onPressed: () => setState(() => _maxPageWidth = (_maxPageWidth + 100).clamp(300.0, 1500.0)),
+          ),
+          const VerticalDivider(width: 24, indent: 12, endIndent: 12),
+          IconButton(
+            icon: const Icon(Icons.fullscreen_exit, size: 20, color: Colors.blueGrey),
+            tooltip: 'Reset Zoom',
             onPressed: () => setState(() => _maxPageWidth = 550.0),
-            child: const Text('Reset', style: TextStyle(fontSize: 10, color: Colors.blue)),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildModernToolbarButton({required IconData icon, required String label, required VoidCallback onPressed, bool isActive = false}) {
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isActive ? Colors.blue.shade50 : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 20, color: isActive ? Colors.blue.shade700 : Colors.blueGrey.shade700),
+            const SizedBox(height: 2),
+            Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isActive ? Colors.blue.shade700 : Colors.blueGrey.shade700)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPrimaryActionButton({required IconData icon, required String label, required Color color, required VoidCallback onPressed}) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 18),
+      label: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        elevation: 0,
+      ),
+    );
+  }
+
+  void _showStyleBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final data = context.watch<CVProvider>().cvData;
+            return Container(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Style Settings', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                      IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  // Font Selection
+                  _buildStyleOption(
+                    label: 'Typography',
+                    icon: Icons.font_download,
+                    child: _buildFontFamilyMenu(context),
+                  ),
+                  const SizedBox(height: 20),
+                  // Font Size
+                  _buildStyleOption(
+                    label: 'Text Size',
+                    icon: Icons.format_size,
+                    child: _buildFontSizeMenu(context),
+                  ),
+                  const SizedBox(height: 20),
+                  // Line Height
+                  _buildStyleOption(
+                    label: 'Line Spacing',
+                    icon: Icons.format_line_spacing,
+                    child: _buildLineHeightMenu(context),
+                  ),
+                  const SizedBox(height: 20),
+                  // Color Picker
+                  _buildStyleOption(
+                    label: 'Theme Color',
+                    icon: Icons.palette,
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.pop(context);
+                        _showColorPicker(context);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Color(int.parse(data.primaryColorHex.replaceFirst('#', '0xff'))),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text('Pick Color', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildStyleOption({required String label, required IconData icon, required Widget child}) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: Colors.blueGrey),
+        const SizedBox(width: 12),
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.blueGrey)),
+        const Spacer(),
+        child,
+      ],
     );
   }
 
