@@ -1,15 +1,86 @@
 import 'package:flutter/material.dart';
 import 'package:smartcv_builder/core/models/cv_data.dart';
+import 'package:smartcv_builder/core/services/persistence_service.dart';
 
 
 
 class CVProvider with ChangeNotifier {
   CVData _cvData = _createDummyData();
+  List<CVData> _savedCVs = [];
+
+  CVProvider() {
+    _loadFromStorage();
+  }
+
+  void _loadFromStorage() {
+    _savedCVs = PersistenceService.loadAllCVs();
+    final currentId = PersistenceService.getCurrentCvId();
+    
+    if (_savedCVs.isEmpty) {
+      // First launch: use dummy data and save it
+      _cvData = _createDummyData();
+      PersistenceService.saveCV(_cvData);
+      _savedCVs = [_cvData];
+    } else {
+      if (currentId != null) {
+        final foundIndex = _savedCVs.indexWhere((cv) => cv.id == currentId);
+        if (foundIndex != -1) {
+          _cvData = _savedCVs[foundIndex];
+        } else {
+          _cvData = _savedCVs.first;
+        }
+      } else {
+        _cvData = _savedCVs.first;
+      }
+    }
+  }
 
   CVData get cvData => _cvData;
+  List<CVData> get savedCVs => _savedCVs;
+
+  // Custom notify wrapper to handle auto-save
+  Future<void> _notifyAndSave() async {
+    notifyListeners();
+    await PersistenceService.saveCV(_cvData);
+    // Refresh the list
+    _savedCVs = PersistenceService.loadAllCVs();
+  }
+
+  void createNewCV() {
+    _cvData = CVData(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      pdfFileName: 'New_CV_${DateTime.now().millisecondsSinceEpoch}',
+    );
+    _notifyAndSave();
+  }
+
+  void loadCV(String id) {
+    final foundIndex = _savedCVs.indexWhere((cv) => cv.id == id);
+    if (foundIndex != -1) {
+      _cvData = _savedCVs[foundIndex];
+      _notifyAndSave();
+    } else if (id == 'example_john_doe') {
+      _cvData = _createDummyData();
+      _notifyAndSave();
+    }
+  }
+
+  Future<void> deleteCV(String id) async {
+    await PersistenceService.deleteCV(id);
+    _savedCVs = PersistenceService.loadAllCVs();
+    if (_cvData.id == id) {
+      if (_savedCVs.isNotEmpty) {
+        _cvData = _savedCVs.first;
+      } else {
+        createNewCV();
+      }
+    }
+    notifyListeners();
+  }
 
   static CVData _createDummyData() {
     return CVData(
+      id: 'example_john_doe',
       personalInfo: PersonalInfo(
         jobTitle: 'Senior Software Engineer',
         headerAlignment: 'left',
@@ -84,13 +155,22 @@ class CVProvider with ChangeNotifier {
           phone: '+1 (555) 987-6543',
         ),
       ],
+      projects: [
+        Project(
+          title: 'SmartCV Builder',
+          link: 'smartcv-zw.web.app',
+          startDate: 'Apr 2024',
+          endDate: 'Present',
+          description: '[{"insert":"Open-source Flutter application for building professional CVs with live PDF preview.\\n"}]',
+        ),
+      ],
     );
   }
 
   // --- Section Titles ---
   void updateSectionTitles(SectionTitles titles) {
     _cvData.sectionTitles = titles;
-    notifyListeners();
+    _notifyAndSave();
   }
 
   void reorderSections(int oldIndex, int newIndex) {
@@ -99,132 +179,152 @@ class CVProvider with ChangeNotifier {
     }
     final String item = _cvData.sectionOrder.removeAt(oldIndex);
     _cvData.sectionOrder.insert(newIndex, item);
-    notifyListeners();
+    _notifyAndSave();
   }
 
   // --- Personal Info ---
   void updatePersonalInfo(PersonalInfo info) {
     _cvData.personalInfo = info;
-    notifyListeners();
+    _notifyAndSave();
   }
 
   // --- Education ---
   void addEducation(Education ed) {
     _cvData.education.add(ed);
-    notifyListeners();
+    _notifyAndSave();
   }
 
   void updateEducation(int index, Education ed) {
     if (index >= 0 && index < _cvData.education.length) {
       _cvData.education[index] = ed;
-      notifyListeners();
+      _notifyAndSave();
     }
   }
 
   void removeEducation(int index) {
     if (index >= 0 && index < _cvData.education.length) {
       _cvData.education.removeAt(index);
-      notifyListeners();
+      _notifyAndSave();
     }
   }
 
   // --- Experience ---
   void addExperience(Experience exp) {
     _cvData.experience.add(exp);
-    notifyListeners();
+    _notifyAndSave();
   }
 
   void updateExperience(int index, Experience exp) {
     if (index >= 0 && index < _cvData.experience.length) {
       _cvData.experience[index] = exp;
-      notifyListeners();
+      _notifyAndSave();
     }
   }
 
   void removeExperience(int index) {
     if (index >= 0 && index < _cvData.experience.length) {
       _cvData.experience.removeAt(index);
-      notifyListeners();
+      _notifyAndSave();
     }
   }
 
   // --- Internships ---
   void addInternship(Internship internship) {
     _cvData.internships.add(internship);
-    notifyListeners();
+    _notifyAndSave();
   }
 
   void updateInternship(int index, Internship internship) {
     if (index >= 0 && index < _cvData.internships.length) {
       _cvData.internships[index] = internship;
-      notifyListeners();
+      _notifyAndSave();
     }
   }
 
   void removeInternship(int index) {
     if (index >= 0 && index < _cvData.internships.length) {
       _cvData.internships.removeAt(index);
-      notifyListeners();
+      _notifyAndSave();
     }
   }
 
   // --- References ---
   void addReference(Reference reference) {
     _cvData.references.add(reference);
-    notifyListeners();
+    _notifyAndSave();
   }
 
   void updateReference(int index, Reference reference) {
     if (index >= 0 && index < _cvData.references.length) {
       _cvData.references[index] = reference;
-      notifyListeners();
+      _notifyAndSave();
     }
   }
 
   void removeReference(int index) {
     if (index >= 0 && index < _cvData.references.length) {
       _cvData.references.removeAt(index);
-      notifyListeners();
+      _notifyAndSave();
     }
   }
 
   // --- Skills ---
   void addSkill(Skill skill) {
     _cvData.skills.add(skill);
-    notifyListeners();
+    _notifyAndSave();
   }
 
   void updateSkill(int index, Skill skill) {
     if (index >= 0 && index < _cvData.skills.length) {
       _cvData.skills[index] = skill;
-      notifyListeners();
+      _notifyAndSave();
     }
   }
 
   void removeSkill(int index) {
     if (index >= 0 && index < _cvData.skills.length) {
       _cvData.skills.removeAt(index);
-      notifyListeners();
+      _notifyAndSave();
     }
   }
 
   // --- Certifications ---
   void addCertification(Certification cert) {
     _cvData.certifications.add(cert);
-    notifyListeners();
+    _notifyAndSave();
   }
 
   void updateCertification(int index, Certification cert) {
     if (index >= 0 && index < _cvData.certifications.length) {
       _cvData.certifications[index] = cert;
-      notifyListeners();
+      _notifyAndSave();
     }
   }
 
   void removeCertification(int index) {
     if (index >= 0 && index < _cvData.certifications.length) {
       _cvData.certifications.removeAt(index);
-      notifyListeners();
+      _notifyAndSave();
+    }
+  }
+
+  // --- Projects ---
+  void addProject(Project project) {
+    _cvData.projects.add(project);
+    _notifyAndSave();
+  }
+
+  void updateProject(int index, Project project) {
+    if (index >= 0 && index < _cvData.projects.length) {
+      _cvData.projects[index] = project;
+      _notifyAndSave();
+    }
+  }
+
+  void removeProject(int index) {
+    if (index >= 0 && index < _cvData.projects.length) {
+      _cvData.projects.removeAt(index);
+      _notifyAndSave();
     }
   }
 
@@ -232,56 +332,56 @@ class CVProvider with ChangeNotifier {
   void addCustomSection(CustomSection section) {
     _cvData.customSections.add(section);
     _cvData.sectionOrder.add(section.id);
-    notifyListeners();
+    _notifyAndSave();
   }
 
   void updateCustomSection(String id, CustomSection section) {
     final index = _cvData.customSections.indexWhere((s) => s.id == id);
     if (index >= 0) {
       _cvData.customSections[index] = section;
-      notifyListeners();
+      _notifyAndSave();
     }
   }
 
   void removeCustomSection(String id) {
     _cvData.customSections.removeWhere((s) => s.id == id);
     _cvData.sectionOrder.remove(id);
-    notifyListeners();
+    _notifyAndSave();
   }
 
   // --- Font Size ---
   void updateBaseFontSize(double size) {
     _cvData.baseFontSize = size.clamp(10, 14);
-    notifyListeners();
+    _notifyAndSave();
   }
   
   void updateLineHeight(double height) {
     _cvData.lineHeight = height;
-    notifyListeners();
+    _notifyAndSave();
   }
 
   void updatePrimaryColor(String hex) {
     _cvData.primaryColorHex = hex;
-    notifyListeners();
+    _notifyAndSave();
   }
 
   void updateFontFamily(String font) {
     _cvData.fontFamily = font;
-    notifyListeners();
+    _notifyAndSave();
   }
 
   void updatePdfFileName(String name) {
     _cvData.pdfFileName = name.replaceAll(RegExp(r'[^\w\s\-]'), '_');
-    notifyListeners();
+    _notifyAndSave();
   }
 
   void changeTemplate(String templateId) {
     _cvData.templateId = templateId;
-    notifyListeners();
+    _notifyAndSave();
   }
   // Clear all data
   void clearAll() {
     _cvData = CVData();
-    notifyListeners();
+    _notifyAndSave();
   }
 }

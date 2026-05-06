@@ -114,6 +114,13 @@ class MetroTemplate implements CVTemplate {
                   content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
                 }
                 break;
+              case 'projects':
+                if (data.sectionTitles.showProjects && data.projects.isNotEmpty) {
+                  content.add(_buildSectionTitle(data.sectionTitles.projects, sizes, lh, primaryColor));
+                  content.addAll(data.projects.map((p) => _buildProjectItem(p, sizes, lh, regular, bold, italic, boldItalic)));
+                  content.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
+                }
+                break;
             }
           }
 
@@ -417,6 +424,48 @@ class MetroTemplate implements CVTemplate {
                 pw.Text(ref.phone, style: pw.TextStyle(fontSize: sizes['body'] ?? 10.0)),
             ],
           ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildProjectItem(Project project, Map<String, double> sizes, double lh, pw.Font regular, pw.Font bold, pw.Font italic, pw.Font boldItalic) {
+    return pw.Padding(
+      padding: pw.EdgeInsets.only(bottom: CVTheme.itemSpacing * lh),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Text(
+                project.title,
+                style: pw.TextStyle(
+                  fontWeight: pw.FontWeight.bold, 
+                  fontStyle: pw.FontStyle.italic,
+                  fontSize: sizes['itemTitle'] ?? 14.0,
+                ),
+              ),
+              pw.Text(
+                '${project.startDate} - ${project.endDate}',
+                style: pw.TextStyle(
+                  color: PdfColors.grey700, 
+                  fontSize: sizes['fieldLabel'] ?? 10.0,
+                ),
+              ),
+            ],
+          ),
+          if (project.link.isNotEmpty)
+            pw.Text(
+              project.link,
+              style: pw.TextStyle(
+                color: PdfColors.blue700,
+                fontSize: (sizes['itemText'] ?? 11.0) - 1,
+                decoration: pw.TextDecoration.underline,
+              ),
+            ),
+          pw.SizedBox(height: 4 * lh),
+          ...TemplateUtils.buildRichText(project.description, regular, bold, italic, boldItalic, sizes['body'] ?? 10.0, lh),
         ],
       ),
     );

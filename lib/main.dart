@@ -7,8 +7,9 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'core/theme/app_theme.dart';
 import 'features/editor/presentation/providers/cv_provider.dart';
 import 'features/settings/presentation/providers/theme_provider.dart';
-import 'features/dashboard/presentation/screens/home_screen.dart';
+import 'features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'core/services/pdf_service.dart';
+import 'core/services/persistence_service.dart';
 
 
 void main() async {
@@ -19,6 +20,8 @@ void main() async {
   try {
     // Warm up the font cache (pre-loads BundledPoppins)
     await PDFService.init();
+    // Initialize Hive local storage
+    await PersistenceService.init();
   } catch (e) {
     debugPrint('Initialization error: $e');
   }
@@ -40,7 +43,6 @@ void main() async {
   FlutterNativeSplash.remove();
 }
 
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -53,7 +55,7 @@ class MyApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeProvider.themeMode,
-      home: const HomeScreen(),
+      home: const DashboardScreen(),
       debugShowCheckedModeBanner: false,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,

@@ -49,6 +49,11 @@ class CreativeTemplate implements CVTemplate {
             leftColWidgets.addAll(data.education.map((e) => _buildEducationItem(e, sizes, lh, regular, bold, italic, boldItalic)));
             leftColWidgets.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
           }
+          if (data.sectionTitles.showProjects && data.projects.isNotEmpty) {
+            leftColWidgets.add(_buildSectionTitle(data.sectionTitles.projects, sizes, lh, primaryColor));
+            leftColWidgets.addAll(data.projects.map((p) => _buildProjectItem(p, sizes, lh, regular, bold, italic, boldItalic)));
+            leftColWidgets.add(pw.SizedBox(height: CVTheme.sectionSpacing * lh));
+          }
 
           // --- SIDEBAR (RIGHT) ---
           if (data.sectionTitles.showPersonalInfo && data.personalInfo.fields.isNotEmpty) {
@@ -263,6 +268,30 @@ class CreativeTemplate implements CVTemplate {
         children: [
           pw.Text(cert.title, style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
           pw.Text(cert.issuer, style: pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildProjectItem(Project project, Map<String, double> sizes, double lh, pw.Font regular, pw.Font bold, pw.Font italic, pw.Font boldItalic) {
+    return pw.Padding(
+      padding: pw.EdgeInsets.only(bottom: 16 * lh),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(project.title, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 13)),
+          if (project.link.isNotEmpty)
+            pw.Text(
+              project.link,
+              style: pw.TextStyle(
+                color: PdfColors.blue700,
+                fontSize: 9,
+                decoration: pw.TextDecoration.underline,
+              ),
+            ),
+          pw.Text('${project.startDate} - ${project.endDate}', style: pw.TextStyle(color: PdfColors.grey700, fontSize: 10, fontStyle: pw.FontStyle.italic)),
+          pw.SizedBox(height: 4 * lh),
+          ...TemplateUtils.buildRichText(project.description, regular, bold, italic, boldItalic, sizes['body'] ?? 10.0, lh),
         ],
       ),
     );

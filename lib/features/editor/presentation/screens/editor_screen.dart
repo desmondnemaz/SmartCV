@@ -382,6 +382,7 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
       case 'experience': return _buildExperienceSection();
       case 'internships': return _buildInternshipSection();
       case 'education': return _buildEducationSection();
+      case 'projects': return _buildProjectsSection();
       case 'skills': return _buildSkillsSection();
       case 'certifications': return _buildCertificationSection();
       case 'references': return _buildReferencesSection();
@@ -1328,6 +1329,129 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
                   onPressed: () => provider.addSkill(Skill()),
                   icon: const Icon(Icons.add),
                   label: const Text('Add Skill'),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildProjectsSection({Key? key}) {
+    return Selector<CVProvider, (List<Project>, SectionTitles)>(
+      key: key,
+      selector: (_, p) => (List.from(p.cvData.projects), p.cvData.sectionTitles),
+      builder: (context, data, _) {
+        final list = data.$1;
+        final titles = data.$2;
+        final provider = context.read<CVProvider>();
+        return ExpansionTile(
+          leading: const Icon(Icons.rocket_launch),
+          title: _buildSectionHeader(context, titles.projects, titles.showProjects, (val) {
+            titles.projects = val;
+            provider.updateSectionTitles(titles);
+          }, () {
+            titles.showProjects = !titles.showProjects;
+            provider.updateSectionTitles(titles);
+          }),
+          childrenPadding: const EdgeInsets.all(16),
+          children: [
+            Column(
+              children: [
+                ...list.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final project = entry.value;
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Project', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                visualDensity: VisualDensity.compact,
+                                onPressed: () {
+                                  _itemControllers.remove('proj_$index')?.dispose();
+                                  provider.removeProject(index);
+                                },
+                              ),
+                            ],
+                          ),
+                          TextFormField(
+                            initialValue: project.title,
+                            decoration: const InputDecoration(labelText: 'Project Title', isDense: true),
+                            onChanged: (val) {
+                              project.title = val;
+                              provider.updateProject(index, project);
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            initialValue: project.link,
+                            decoration: const InputDecoration(labelText: 'Project Link / URL (Optional)', isDense: true),
+                            onChanged: (val) {
+                              project.link = val;
+                              provider.updateProject(index, project);
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  initialValue: project.startDate,
+                                  decoration: const InputDecoration(labelText: 'Start Date', isDense: true),
+                                  onChanged: (val) {
+                                    project.startDate = val;
+                                    provider.updateProject(index, project);
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: TextFormField(
+                                  initialValue: project.endDate,
+                                  decoration: const InputDecoration(labelText: 'End Date', isDense: true),
+                                  onChanged: (val) {
+                                    project.endDate = val;
+                                    provider.updateProject(index, project);
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          const Text('Description', style: TextStyle(fontSize: 11, color: Colors.blueGrey, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          _buildQuillEditor(
+                            id: 'proj_$index',
+                            initialValue: project.description,
+                            onChanged: (val) {
+                              project.description = val;
+                              provider.updateProject(index, project);
+                            },
+                            height: 120,
+                            placeholder: 'Describe your project...',
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  onPressed: () {
+                    _itemControllers.remove('proj_${list.length}')?.dispose();
+                    provider.addProject(Project());
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Project'),
                 ),
               ],
             ),

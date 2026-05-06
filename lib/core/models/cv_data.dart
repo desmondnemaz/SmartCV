@@ -205,6 +205,38 @@ class Skill {
       );
 }
 
+class Project {
+  String title;
+  String link;
+  String description;
+  String startDate;
+  String endDate;
+
+  Project({
+    this.title = '',
+    this.link = '',
+    this.description = '',
+    this.startDate = '',
+    this.endDate = '',
+  });
+
+  Map<String, dynamic> toJson() => {
+        'title': title,
+        'link': link,
+        'description': description,
+        'startDate': startDate,
+        'endDate': endDate,
+      };
+
+  factory Project.fromJson(Map<String, dynamic> json) => Project(
+        title: json['title'] ?? '',
+        link: json['link'] ?? '',
+        description: json['description'] ?? '',
+        startDate: json['startDate'] ?? '',
+        endDate: json['endDate'] ?? '',
+      );
+}
+
 class Certification {
   String title;
   String issuer;
@@ -282,6 +314,8 @@ class SectionTitles {
   bool showCertifications;
   String references;
   bool showReferences;
+  String projects;
+  bool showProjects;
 
   SectionTitles({
     this.personalInfo = 'Personal Information',
@@ -300,6 +334,8 @@ class SectionTitles {
     this.showCertifications = true,
     this.references = 'References',
     this.showReferences = true,
+    this.projects = 'Projects',
+    this.showProjects = true,
   });
 
   Map<String, dynamic> toJson() => {
@@ -319,6 +355,8 @@ class SectionTitles {
         'showCertifications': showCertifications,
         'references': references,
         'showReferences': showReferences,
+        'projects': projects,
+        'showProjects': showProjects,
       };
 
   factory SectionTitles.fromJson(Map<String, dynamic> json) => SectionTitles(
@@ -338,6 +376,8 @@ class SectionTitles {
         showCertifications: json['showCertifications'] ?? true,
         references: json['references'] ?? 'References',
         showReferences: json['showReferences'] ?? true,
+        projects: json['projects'] ?? 'Projects',
+        showProjects: json['showProjects'] ?? true,
       );
 }
 
@@ -350,6 +390,7 @@ class CVData {
   List<Reference> references;
   List<Skill> skills;
   List<Certification> certifications;
+  List<Project> projects;
   List<CustomSection> customSections;
   List<String> sectionOrder;
   double baseFontSize;
@@ -358,9 +399,11 @@ class CVData {
   String fontFamily;
   String pdfFileName;
   String templateId;
+  String id;
 
 
   CVData({
+    this.id = 'default_cv',
     PersonalInfo? personalInfo,
     SectionTitles? sectionTitles,
     List<Education>? education,
@@ -369,6 +412,7 @@ class CVData {
     List<Reference>? references,
     List<Skill>? skills,
     List<Certification>? certifications,
+    List<Project>? projects,
     List<CustomSection>? customSections,
     List<String>? sectionOrder,
     this.baseFontSize = 10.0,
@@ -387,6 +431,7 @@ class CVData {
         references = references ?? [],
         skills = skills ?? [],
         certifications = certifications ?? [],
+        projects = projects ?? [],
         customSections = customSections ?? [],
         sectionOrder = sectionOrder ?? [
           'personalInfo',
@@ -394,6 +439,7 @@ class CVData {
           'experience',
           'internships',
           'education',
+          'projects',
           'skills',
           'certifications',
           'references'
@@ -408,6 +454,7 @@ class CVData {
         'references': references.map((e) => e.toJson()).toList(),
         'skills': skills.map((e) => e.toJson()).toList(),
         'certifications': certifications.map((e) => e.toJson()).toList(),
+        'projects': projects.map((e) => e.toJson()).toList(),
         'customSections': customSections.map((e) => e.toJson()).toList(),
         'sectionOrder': sectionOrder,
         'baseFontSize': baseFontSize,
@@ -416,6 +463,7 @@ class CVData {
         'fontFamily': fontFamily,
         'pdfFileName': pdfFileName,
         'templateId': templateId,
+        'id': id,
       };
 
   factory CVData.fromJson(Map<String, dynamic> json) => CVData(
@@ -427,6 +475,7 @@ class CVData {
         references: (json['references'] as List?)?.map((e) => Reference.fromJson(e)).toList(),
         skills: (json['skills'] as List?)?.map((e) => Skill.fromJson(e)).toList(),
         certifications: (json['certifications'] as List?)?.map((e) => Certification.fromJson(e)).toList(),
+        projects: (json['projects'] as List?)?.map((e) => Project.fromJson(e)).toList(),
         customSections: (json['customSections'] as List?)?.map((e) => CustomSection.fromJson(e)).toList(),
         sectionOrder: (json['sectionOrder'] as List?)?.map((e) => e as String).toList(),
         baseFontSize: (json['baseFontSize'] as num?)?.toDouble() ?? 10.0,
@@ -435,5 +484,6 @@ class CVData {
         fontFamily: json['fontFamily'] ?? 'Poppins',
         pdfFileName: json['pdfFileName'] ?? '',
         templateId: json['templateId'] ?? 'default',
+        id: json['id'] ?? 'default_cv',
       );
 }

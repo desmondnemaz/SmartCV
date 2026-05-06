@@ -528,14 +528,7 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
                                 )
                               ] : null,
                             ),
-                            child: Center(
-                              // Placeholder icon until we generate images
-                              child: Icon(
-                                Icons.text_snippet,
-                                color: isSelected ? Colors.blue : Colors.grey.shade400,
-                                size: 32,
-                              ),
-                            ),
+                            child: _buildTemplateLayoutPreview(template['id']!, isSelected),
                           ),
                         ),
                         const SizedBox(height: 6),
@@ -706,6 +699,57 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
           }
         );
       },
+    );
+  }
+
+  Widget _buildTemplateLayoutPreview(String id, bool isSelected) {
+    final primary = isSelected ? Colors.blue : Colors.grey.shade400;
+    final secondary = isSelected ? Colors.blue.withValues(alpha: 0.3) : Colors.grey.shade300;
+
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: Column(
+        children: [
+          // Header
+          Container(
+            height: 6,
+            width: double.infinity,
+            decoration: BoxDecoration(color: primary, borderRadius: BorderRadius.circular(2)),
+          ),
+          const SizedBox(height: 4),
+          // Body layout simulation
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (id == 'modern' || id == 'creative') ...[
+                  // Sidebar
+                  Container(
+                    width: 15,
+                    color: secondary,
+                  ),
+                  const SizedBox(width: 4),
+                ],
+                // Main content lines
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: List.generate(
+                      8,
+                      (i) => Container(
+                        height: 2,
+                        width: (i % 3 == 0) ? double.infinity : (i % 2 == 0) ? 40 : 20,
+                        margin: const EdgeInsets.only(bottom: 3),
+                        decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(1)),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

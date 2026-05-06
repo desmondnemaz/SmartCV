@@ -93,6 +93,14 @@ class ExecutiveTemplate implements CVTemplate {
                 lh,
                 data.references.map((r) => _buildReferenceItem(r, sizes, lh, regular, bold, italic, boldItalic)).toList(),
               );
+            } else if (sectionKey == 'projects' && data.sectionTitles.showProjects && data.projects.isNotEmpty) {
+              sectionWidget = _buildSection(
+                data.sectionTitles.projects,
+                primaryColor,
+                sizes,
+                lh,
+                data.projects.map((p) => _buildProjectItem(p, sizes, lh, regular, bold, italic, boldItalic)).toList(),
+              );
             } else if (sectionKey.startsWith('custom_')) {
               final customIndex = data.customSections.indexWhere((s) => s.id == sectionKey);
               if (customIndex != -1) {
@@ -385,6 +393,57 @@ class ExecutiveTemplate implements CVTemplate {
               fontSize: (sizes['body'] ?? 10.0) - 1,
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildProjectItem(Project project, Map<String, double> sizes, double lh, pw.Font regular, pw.Font bold, pw.Font italic, pw.Font boldItalic) {
+    return pw.Padding(
+      padding: pw.EdgeInsets.only(bottom: 12 * lh),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Expanded(
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      project.title,
+                      style: pw.TextStyle(
+                        fontWeight: pw.FontWeight.bold,
+                        fontSize: sizes['itemTitle'] ?? 14.0,
+                      ),
+                    ),
+                    if (project.link.isNotEmpty)
+                      pw.Text(
+                        project.link,
+                        style: pw.TextStyle(
+                          color: PdfColors.blue700,
+                          fontSize: (sizes['itemText'] ?? 11.0) - 1,
+                          decoration: pw.TextDecoration.underline,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              if (project.startDate.isNotEmpty)
+                pw.Text(
+                  '${project.startDate} - ${project.endDate}',
+                  style: pw.TextStyle(
+                    color: PdfColors.grey600,
+                    fontSize: sizes['fieldLabel'] ?? 10.0,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+            ],
+          ),
+          pw.SizedBox(height: 6 * lh),
+          ...TemplateUtils.buildRichText(project.description, regular, bold, italic, boldItalic, sizes['body'] ?? 10.0, lh),
         ],
       ),
     );

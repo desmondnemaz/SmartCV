@@ -8,6 +8,7 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
+    final theme = Theme.of(context);
 
 
     return Scaffold(
@@ -51,6 +52,50 @@ class SettingsScreen extends StatelessWidget {
             title: Text('SmartCV Builder'),
             subtitle: Text('Version 1.0.0'),
           ),
+          const ListTile(
+            leading: Icon(Icons.person_outline),
+            title: Text('Developer'),
+            subtitle: Text('Desmond Lincoln Nemaunga'),
+          ),
+          const ListTile(
+            leading: Icon(Icons.business_outlined),
+            title: Text('Company'),
+            subtitle: Text('CodeGraspers'),
+          ),
+          const SizedBox(height: 32),
+          Center(
+            child: Column(
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Made with ',
+                      style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                    const Icon(Icons.favorite, color: Colors.red, size: 16),
+                    Text(
+                      ' by ',
+                      style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                    Text(
+                      'CodeGraspers',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '© 2024 All Rights Reserved',
+                  style: theme.textTheme.bodySmall?.copyWith(fontSize: 10, color: theme.colorScheme.outline),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 32),
         ],
       ),
     );

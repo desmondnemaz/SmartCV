@@ -4,6 +4,8 @@ import 'package:smartcv_builder/features/editor/presentation/screens/editor_scre
 import 'package:smartcv_builder/features/settings/presentation/screens/settings_screen.dart';
 import 'package:smartcv_builder/features/settings/presentation/providers/theme_provider.dart';
 import 'package:smartcv_builder/core/utils/responsive.dart';
+import 'package:smartcv_builder/features/templates/presentation/screens/template_gallery_screen.dart';
+import 'package:smartcv_builder/features/dashboard/presentation/screens/dashboard_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -113,14 +115,20 @@ class HomeScreen extends StatelessWidget {
                   icon: Icons.dashboard_outlined,
                   title: 'My Dashboard',
                   subtitle: 'Manage saved CVs',
-                  isComingSoon: true,
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const DashboardScreen()));
+                  },
                 ),
                 _buildDrawerItem(
                   context,
                   icon: Icons.style_rounded,
                   title: 'Templates',
                   subtitle: 'Explore layouts',
-                  isComingSoon: true,
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const TemplateGalleryScreen()));
+                  },
                 ),
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -247,7 +255,7 @@ class HomeScreen extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           const Text(
-            'Version 1.0.0',
+            'Version 1.0.0 • CodeGraspers',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
