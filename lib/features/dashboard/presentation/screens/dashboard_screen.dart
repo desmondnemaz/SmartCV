@@ -32,7 +32,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final isDesktop = Responsive.isDesktop(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F3F3),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: !isDesktop
+          ? AppBar(
+              title: const Text('Dashboard'),
+            )
+          : null,
       // Use a Drawer for sidebar on mobile, NavigationRail on desktop
       drawer: !isDesktop ? _buildMobileDrawer(colorScheme) : null,
       bottomNavigationBar: !isDesktop ? _buildBottomNav(colorScheme) : null,
@@ -173,7 +178,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildMobileDrawer(ColorScheme colorScheme) {
     return Drawer(
-      child: Column(
+      child: ListView(
+        padding: EdgeInsets.zero,
         children: [
           const DrawerHeader(child: Center(child: Text('SmartCV', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)))),
           ListTile(leading: const Icon(Icons.home), title: const Text('Home'), selected: _selectedIndex == 0, onTap: () => _onTabTapped(0)),
@@ -397,12 +403,55 @@ class _DashboardScreenState extends State<DashboardScreen> {
               leading: Icon(Icons.description, color: Colors.blue.shade800),
               title: Text(cv.personalInfo.fullName.isEmpty ? 'Untitled' : cv.personalInfo.fullName),
               subtitle: Text(cv.personalInfo.jobTitle, style: const TextStyle(fontSize: 12)),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.more_vert),
-                    onPressed: () {},
+              trailing: PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert),
+                onSelected: (value) {
+                  if (value == 'edit') {
+                    provider.loadCV(cv.id);
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const CVEditorScreen()));
+                  } else if (value == 'delete') {
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Delete CV'),
+                        content: const Text('Are you sure you want to delete this CV? This action cannot be undone.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              provider.deleteCV(cv.id);
+                              Navigator.pop(ctx);
+                            },
+                            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        Icon(Icons.edit, size: 20),
+                        SizedBox(width: 12),
+                        Text('Edit'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete, size: 20, color: Colors.red),
+                        SizedBox(width: 12),
+                        Text('Delete', style: TextStyle(color: Colors.red)),
+                      ],
+                    ),
                   ),
                 ],
               ),
