@@ -281,34 +281,169 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
     );
   }
 
+  /// Returns true if navigation should proceed (leave), false if staying.
+  /// Also handles discard logic internally.
+  Future<bool> _confirmLeaveEditor(BuildContext context) async {
+    final provider = context.read<CVProvider>();
+
+    // --- EMPTY CV: offer Discard or Keep as Draft ---
+    if (provider.isCurrentCVEmpty) {
+      final choice = await showDialog<String>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          icon: const Icon(Icons.description_outlined, size: 40, color: Colors.blueGrey),
+          title: const Text(
+            'Empty CV',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: const Text(
+            'This CV has no content yet.\nWould you like to discard it or keep it as a draft?',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey),
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop('editing'),
+              child: const Text('Keep Editing'),
+            ),
+            OutlinedButton(
+              onPressed: () => Navigator.of(ctx).pop('draft'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text('Keep as Draft'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(ctx).pop('discard'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red.shade600,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text('Discard'),
+            ),
+          ],
+        ),
+      );
+
+      if (choice == 'discard') {
+        await provider.discardCurrentCV();
+        return true; // pop editor
+      } else if (choice == 'draft') {
+        await provider.saveCurrentCV();
+        return true; // leave, keep saved
+      }
+      return false; // keep editing
+    }
+
+    // --- CV HAS CONTENT: simple leave confirmation ---
+    return await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            icon: const Icon(Icons.save_outlined, size: 40, color: Colors.blueGrey),
+            title: const Text(
+              'Leave Editor?',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            content: const Text(
+              'Your CV is saved automatically.\nYou can return and continue editing anytime.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey),
+            ),
+            actionsAlignment: MainAxisAlignment.center,
+            actions: [
+              OutlinedButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text('Keep Editing'),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text('Leave'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: _buildAppBarTitle(context),
-        actions: [
-          if (!Responsive.isDesktop(context))
-            IconButton(
-              icon: const Icon(Icons.picture_as_pdf),
-              onPressed: () => _showMobilePreview(context),
-            ),
-        ],
-      ),
-
-      body: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: _buildEditorForm(),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldLeave = await _confirmLeaveEditor(context);
+        if (shouldLeave && context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: _buildAppBarTitle(context),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            tooltip: 'Back to Dashboard',
+            onPressed: () async {
+              final shouldLeave = await _confirmLeaveEditor(context);
+              if (shouldLeave && context.mounted) {
+                Navigator.of(context).pop();
+              }
+            },
           ),
-          if (Responsive.isDesktop(context))
-            const VerticalDivider(width: 1),
-          if (Responsive.isDesktop(context))
-            Expanded(
-              flex: 3,
-              child: _buildLivePreview(),
+          actions: [
+            if (!Responsive.isDesktop(context))
+              IconButton(
+                icon: const Icon(Icons.picture_as_pdf),
+                onPressed: () => _showMobilePreview(context),
+              ),
+            IconButton(
+              icon: const Icon(Icons.save),
+              tooltip: 'Save CV',
+              onPressed: () {
+                context.read<CVProvider>().updatePdfFileName(_pdfFileNameCtrl.text);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('CV saved successfully'),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+              },
             ),
-        ],
+          ],
+        ),
+        body: Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: _buildEditorForm(),
+            ),
+            if (Responsive.isDesktop(context))
+              const VerticalDivider(width: 1),
+            if (Responsive.isDesktop(context))
+              Expanded(
+                flex: 3,
+                child: _buildLivePreview(),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -346,28 +481,84 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
                         Expanded(child: _buildSectionByKey(order[i])),
                       ],
                     ),
-                  const SizedBox(key: ValueKey('footerSpacer'), height: 32),
+                  // Section Picker at the bottom of the list
+                  Padding(
+                    key: const ValueKey('section_picker_spacer'),
+                    padding: const EdgeInsets.only(top: 16, bottom: 32),
+                    child: _buildSectionPicker(order),
+                  ),
                 ],
               );
             },
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: ElevatedButton.icon(
-            onPressed: () {
-              final id = 'custom_${DateTime.now().millisecondsSinceEpoch}';
-              context.read<CVProvider>().addCustomSection(
-                    CustomSection(id: id),
-                  );
-            },
-            icon: const Icon(Icons.add),
-            label: const Text('Add Custom Section'),
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 48),
-            ),
+      ],
+    );
+  }
+
+  Widget _buildSectionPicker(List<String> currentOrder) {
+    final allPossibleSections = [
+      {'key': 'experience', 'label': 'Experience', 'icon': Icons.work},
+      {'key': 'education', 'label': 'Education', 'icon': Icons.school},
+      {'key': 'skills', 'label': 'Skills', 'icon': Icons.star},
+      {'key': 'internships', 'label': 'Internships', 'icon': Icons.work_outline},
+      {'key': 'projects', 'label': 'Projects', 'icon': Icons.code},
+      {'key': 'certifications', 'label': 'Certifications', 'icon': Icons.verified_outlined},
+      {'key': 'references', 'label': 'References', 'icon': Icons.people_outline},
+      {'key': 'courses', 'label': 'Courses', 'icon': Icons.book_outlined},
+      {'key': 'activities', 'label': 'Extracurricular activities', 'icon': Icons.sports_basketball_outlined},
+      {'key': 'qualities', 'label': 'Qualities', 'icon': Icons.lightbulb_outline},
+      {'key': 'achievements', 'label': 'Achievements', 'icon': Icons.emoji_events_outlined},
+      {'key': 'signature', 'label': 'Signature', 'icon': Icons.edit_note},
+      {'key': 'footer', 'label': 'Footer', 'icon': Icons.short_text},
+      {'key': 'custom', 'label': 'Custom section', 'icon': Icons.add},
+    ];
+
+    // Filter out already added sections (except 'custom' which can be added multiple times)
+    final available = allPossibleSections.where((s) {
+      if (s['key'] == 'custom') return true;
+      return !currentOrder.contains(s['key']);
+    }).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (available.isNotEmpty) ...[
+          const Text('Add Sections', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: available.map((s) {
+              return ActionChip(
+                avatar: Icon(s['icon'] as IconData, size: 16),
+                label: Text(s['label'] as String),
+                onPressed: () {
+                  final key = s['key'] as String;
+                  final label = s['label'] as String;
+                  
+                  if (key == 'custom') {
+                    final id = 'custom_${DateTime.now().millisecondsSinceEpoch}';
+                    context.read<CVProvider>().addCustomSection(CustomSection(id: id));
+                    return;
+                  }
+
+                  // Standard sections
+                  if (['experience', 'education', 'skills', 'internships', 'projects', 'certifications', 'references'].contains(key)) {
+                    context.read<CVProvider>().addSection(key);
+                  } else {
+                    // Create as custom section with a preset title
+                    final id = 'custom_${key}_${DateTime.now().millisecondsSinceEpoch}';
+                    context.read<CVProvider>().addCustomSection(CustomSection(id: id, title: label));
+                  }
+                },
+                backgroundColor: Colors.white,
+                shape: StadiumBorder(side: BorderSide(color: Colors.grey.shade300)),
+              );
+            }).toList(),
           ),
-        ),
+          const SizedBox(height: 16),
+        ],
       ],
     );
   }
@@ -470,7 +661,7 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
 
 
 
-  Widget _buildSectionHeader(BuildContext context, String currentTitle, bool isVisible, Function(String) onRename, VoidCallback onToggleVisibility) {
+  Widget _buildSectionHeader(BuildContext context, String currentTitle, bool isVisible, Function(String) onRename, VoidCallback onToggleVisibility, [VoidCallback? onRemove]) {
     return Row(
       children: [
         Expanded(
@@ -497,6 +688,8 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
               _showRenameDialog(context, currentTitle, onRename);
             } else if (val == 'toggle_visibility') {
               onToggleVisibility();
+            } else if (val == 'remove' && onRemove != null) {
+              onRemove();
             }
           },
           itemBuilder: (context) => [
@@ -520,6 +713,17 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
                 ],
               ),
             ),
+            if (onRemove != null)
+              const PopupMenuItem(
+                value: 'remove',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                    SizedBox(width: 8),
+                    Text('Delete section', style: TextStyle(color: Colors.red)),
+                  ],
+                ),
+              ),
           ],
         ),
       ],
@@ -563,11 +767,9 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
         return ExpansionTile(
           leading: const Icon(Icons.person),
           title: _buildSectionHeader(context, titles.personalInfo, titles.showPersonalInfo, (val) {
-            titles.personalInfo = val;
-            provider.updateSectionTitles(titles);
+            provider.updateSectionTitles(titles.copyWith(personalInfo: val));
           }, () {
-            titles.showPersonalInfo = !titles.showPersonalInfo;
-            provider.updateSectionTitles(titles);
+            provider.updateSectionTitles(titles.copyWith(showPersonalInfo: !titles.showPersonalInfo));
           }),
           childrenPadding: const EdgeInsets.all(16),
           children: [
@@ -637,11 +839,11 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
         return ExpansionTile(
           leading: const Icon(Icons.description),
           title: _buildSectionHeader(context, titles.professionalSummary, titles.showProfessionalSummary, (val) {
-            titles.professionalSummary = val;
-            provider.updateSectionTitles(titles);
+            provider.updateSectionTitles(titles.copyWith(professionalSummary: val));
           }, () {
-            titles.showProfessionalSummary = !titles.showProfessionalSummary;
-            provider.updateSectionTitles(titles);
+            provider.updateSectionTitles(titles.copyWith(showProfessionalSummary: !titles.showProfessionalSummary));
+          }, () {
+            provider.removeSection('professionalSummary');
           }),
           childrenPadding: const EdgeInsets.all(16),
           children: [
@@ -725,15 +927,10 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
   }
 
   Widget _buildCustomSection(String id) {
-    return Selector<CVProvider, (CustomSection?, SectionTitles)>(
+    return Selector<CVProvider, CustomSection?>(
       key: ValueKey(id),
-      selector: (_, p) {
-        final section = p.cvData.customSections.cast<CustomSection?>().firstWhere((s) => s?.id == id, orElse: () => null);
-        return (section, p.cvData.sectionTitles);
-      },
-      builder: (context, data, _) {
-        final section = data.$1;
-        final sectionTitles = data.$2;
+      selector: (_, p) => p.cvData.customSections.cast<CustomSection?>().firstWhere((s) => s?.id == id, orElse: () => null),
+      builder: (context, section, _) {
         final provider = context.read<CVProvider>();
         
         if (section == null) return const SizedBox.shrink();
@@ -741,28 +938,15 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
         return ExpansionTile(
           leading: const Icon(Icons.dashboard_customize),
           title: _buildSectionHeader(context, section.title, section.isVisible, (val) {
-            section.title = val;
-            provider.updateSectionTitles(sectionTitles); // Trigger update
-            provider.updateCustomSection(id, section);
+            provider.updateCustomSection(id, section.copyWith(title: val));
           }, () {
-            section.isVisible = !section.isVisible;
-            provider.updateCustomSection(id, section);
+            provider.updateCustomSection(id, section.copyWith(isVisible: !section.isVisible));
+          }, () {
+            _itemControllers.remove(id)?.dispose();
+            provider.removeCustomSection(id);
           }),
           childrenPadding: const EdgeInsets.all(16),
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton.icon(
-                  onPressed: () {
-                    _itemControllers.remove(id)?.dispose();
-                    provider.removeCustomSection(id);
-                  },
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  label: const Text('Delete Section', style: TextStyle(color: Colors.red)),
-                ),
-              ],
-            ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -802,11 +986,11 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
         return ExpansionTile(
           leading: const Icon(Icons.work),
           title: _buildSectionHeader(context, titles.experience, titles.showExperience, (val) {
-            titles.experience = val;
-            provider.updateSectionTitles(titles);
+            provider.updateSectionTitles(titles.copyWith(experience: val));
           }, () {
-            titles.showExperience = !titles.showExperience;
-            provider.updateSectionTitles(titles);
+            provider.updateSectionTitles(titles.copyWith(showExperience: !titles.showExperience));
+          }, () {
+            provider.removeSection('experience');
           }),
           childrenPadding: const EdgeInsets.all(16),
           children: [
@@ -927,11 +1111,11 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
         return ExpansionTile(
           leading: const Icon(Icons.history_edu),
           title: _buildSectionHeader(context, titles.internships, titles.showInternships, (val) {
-            titles.internships = val;
-            provider.updateSectionTitles(titles);
+            provider.updateSectionTitles(titles.copyWith(internships: val));
           }, () {
-            titles.showInternships = !titles.showInternships;
-            provider.updateSectionTitles(titles);
+            provider.updateSectionTitles(titles.copyWith(showInternships: !titles.showInternships));
+          }, () {
+            provider.removeSection('internships');
           }),
           childrenPadding: const EdgeInsets.all(16),
           children: [
@@ -1050,11 +1234,11 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
         return ExpansionTile(
           leading: const Icon(Icons.people),
           title: _buildSectionHeader(context, titles.references, titles.showReferences, (val) {
-            titles.references = val;
-            provider.updateSectionTitles(titles);
+            provider.updateSectionTitles(titles.copyWith(references: val));
           }, () {
-            titles.showReferences = !titles.showReferences;
-            provider.updateSectionTitles(titles);
+            provider.updateSectionTitles(titles.copyWith(showReferences: !titles.showReferences));
+          }, () {
+            provider.removeSection('references');
           }),
           childrenPadding: const EdgeInsets.all(16),
           children: [
@@ -1165,11 +1349,11 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
         return ExpansionTile(
           leading: const Icon(Icons.school),
           title: _buildSectionHeader(context, titles.education, titles.showEducation, (val) {
-            titles.education = val;
-            provider.updateSectionTitles(titles);
+            provider.updateSectionTitles(titles.copyWith(education: val));
           }, () {
-            titles.showEducation = !titles.showEducation;
-            provider.updateSectionTitles(titles);
+            provider.updateSectionTitles(titles.copyWith(showEducation: !titles.showEducation));
+          }, () {
+            provider.removeSection('education');
           }),
           childrenPadding: const EdgeInsets.all(16),
           children: [
@@ -1288,11 +1472,11 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
         return ExpansionTile(
           leading: const Icon(Icons.star),
           title: _buildSectionHeader(context, titles.skills, titles.showSkills, (val) {
-            titles.skills = val;
-            provider.updateSectionTitles(titles);
+            provider.updateSectionTitles(titles.copyWith(skills: val));
           }, () {
-            titles.showSkills = !titles.showSkills;
-            provider.updateSectionTitles(titles);
+            provider.updateSectionTitles(titles.copyWith(showSkills: !titles.showSkills));
+          }, () {
+            provider.removeSection('skills');
           }),
           childrenPadding: const EdgeInsets.all(16),
           children: [
@@ -1349,11 +1533,11 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
         return ExpansionTile(
           leading: const Icon(Icons.rocket_launch),
           title: _buildSectionHeader(context, titles.projects, titles.showProjects, (val) {
-            titles.projects = val;
-            provider.updateSectionTitles(titles);
+            provider.updateSectionTitles(titles.copyWith(projects: val));
           }, () {
-            titles.showProjects = !titles.showProjects;
-            provider.updateSectionTitles(titles);
+            provider.updateSectionTitles(titles.copyWith(showProjects: !titles.showProjects));
+          }, () {
+            provider.removeSection('projects');
           }),
           childrenPadding: const EdgeInsets.all(16),
           children: [
@@ -1472,11 +1656,11 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
         return ExpansionTile(
           leading: const Icon(Icons.verified),
           title: _buildSectionHeader(context, titles.certifications, titles.showCertifications, (val) {
-            titles.certifications = val;
-            provider.updateSectionTitles(titles);
+            provider.updateSectionTitles(titles.copyWith(certifications: val));
           }, () {
-            titles.showCertifications = !titles.showCertifications;
-            provider.updateSectionTitles(titles);
+            provider.updateSectionTitles(titles.copyWith(showCertifications: !titles.showCertifications));
+          }, () {
+            provider.removeSection('certifications');
           }),
           childrenPadding: const EdgeInsets.all(16),
           children: [
@@ -1606,8 +1790,23 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
     );
   }
   Widget _buildAppBarTitle(BuildContext context) {
+    final provider = context.watch<CVProvider>();
+
     if (Responsive.isMobile(context)) {
-      return const Text('SmartCV Editor', style: TextStyle(fontSize: 16));
+      return InkWell(
+        onTap: () => _showFileNameDialog(context),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              provider.cvData.pdfFileName.isEmpty ? 'Untitled CV' : provider.cvData.pdfFileName,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(width: 8),
+            const Icon(Icons.edit, size: 14, color: Colors.white70),
+          ],
+        ),
+      );
     }
 
     return Row(
@@ -1639,6 +1838,36 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  void _showFileNameDialog(BuildContext context) {
+    final provider = context.read<CVProvider>();
+    final controller = TextEditingController(text: provider.cvData.pdfFileName);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rename CV'),
+        content: TextFormField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'File Name',
+            hintText: 'e.g. My_Awesome_CV',
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () {
+              provider.updatePdfFileName(controller.text.trim());
+              _pdfFileNameCtrl.text = controller.text.trim();
+              Navigator.pop(context);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:smartcv_builder/features/editor/presentation/providers/cv_provider.dart';
 import 'package:smartcv_builder/features/editor/presentation/screens/editor_screen.dart';
@@ -31,30 +32,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final savedCVs = provider.savedCVs;
     final isDesktop = Responsive.isDesktop(context);
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: !isDesktop
-          ? AppBar(
-              title: const Text('Dashboard'),
-            )
-          : null,
-      // Use a Drawer for sidebar on mobile, NavigationRail on desktop
-      drawer: !isDesktop ? _buildMobileDrawer(colorScheme) : null,
-      bottomNavigationBar: !isDesktop ? _buildBottomNav(colorScheme) : null,
-      body: Row(
-        children: [
-          if (isDesktop) _buildSidebar(colorScheme),
-          Expanded(
-            child: IndexedStack(
-              index: _selectedIndex,
-              children: [
-                _buildHomeTab(context, provider, theme, colorScheme, savedCVs),
-                _buildNewTab(context, provider, theme, colorScheme),
-                _buildOpenTab(context, provider, theme, colorScheme, savedCVs),
-              ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldExit = await _showExitConfirmationDialog(context);
+        if (shouldExit && context.mounted) {
+          SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        appBar: !isDesktop
+            ? AppBar(
+                title: const Text('Dashboard'),
+              )
+            : null,
+        // Use a Drawer for sidebar on mobile, NavigationRail on desktop
+        drawer: !isDesktop ? _buildMobileDrawer(colorScheme) : null,
+        bottomNavigationBar: !isDesktop ? _buildBottomNav(colorScheme) : null,
+        body: Row(
+          children: [
+            if (isDesktop) _buildSidebar(colorScheme),
+            Expanded(
+              child: IndexedStack(
+                index: _selectedIndex,
+                children: [
+                  _buildHomeTab(context, provider, theme, colorScheme, savedCVs),
+                  _buildNewTab(context, provider, theme, colorScheme),
+                  _buildOpenTab(context, provider, theme, colorScheme, savedCVs),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -216,6 +227,60 @@ class _DashboardScreenState extends State<DashboardScreen> {
     Navigator.pop(context); // Close drawer
   }
 
+  Future<bool> _showExitConfirmationDialog(BuildContext context) async {
+    return await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            icon: const Icon(
+              Icons.exit_to_app_rounded,
+              size: 40,
+              color: Colors.blueGrey,
+            ),
+            title: const Text(
+              'Exit SmartCV?',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            content: const Text(
+              'Are you sure you want to exit the app?\nAll your work is saved automatically.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey),
+            ),
+            actionsAlignment: MainAxisAlignment.center,
+            actions: [
+              OutlinedButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text('Stay'),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red.shade600,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text('Exit'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
   Widget _buildTemplatesSection(BuildContext context, CVProvider provider, ThemeData theme, {bool fullHeight = false}) {
     final templates = [
       {'id': 'blank', 'name': 'Blank document', 'icon': Icons.add},
@@ -235,7 +300,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const Icon(Icons.keyboard_arrow_down, size: 20),
               const SizedBox(width: 4),
               Text(
-                'New',
+                'Templates',
                 style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
             ],
@@ -264,6 +329,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
               itemBuilder: (context, index) => _buildTemplateCard(context, provider, templates[index]),
             ),
           ),
+        if (!fullHeight) ...[
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text(
+                'Templates',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.blue.shade300,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.arrow_forward_rounded,
+                size: 14,
+                color: Colors.blue.shade300,
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }
@@ -350,8 +437,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Row(
       children: [
         _buildTabItem('Recent', true, colorScheme),
-        const SizedBox(width: 32),
-        _buildTabItem('Favorites', false, colorScheme),
       ],
     );
   }
@@ -401,8 +486,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
             final cv = savedCVs[index];
             return ListTile(
               leading: Icon(Icons.description, color: Colors.blue.shade800),
-              title: Text(cv.personalInfo.fullName.isEmpty ? 'Untitled' : cv.personalInfo.fullName),
-              subtitle: Text(cv.personalInfo.jobTitle, style: const TextStyle(fontSize: 12)),
+              title: Text(
+                cv.pdfFileName.isNotEmpty ? cv.pdfFileName : (cv.personalInfo.fullName.isEmpty ? 'Untitled CV' : cv.personalInfo.fullName),
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text(
+                'Last edited: ${cv.lastModifiedFormatted}',
+                style: const TextStyle(fontSize: 12),
+              ),
               trailing: PopupMenuButton<String>(
                 icon: const Icon(Icons.more_vert),
                 onSelected: (value) {

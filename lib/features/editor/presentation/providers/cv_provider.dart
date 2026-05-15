@@ -17,10 +17,11 @@ class CVProvider with ChangeNotifier {
     final currentId = PersistenceService.getCurrentCvId();
     
     if (_savedCVs.isEmpty) {
-      // First launch: use dummy data and save it
-      _cvData = _createDummyData();
-      PersistenceService.saveCV(_cvData);
-      _savedCVs = [_cvData];
+      // Start with a fresh blank CV in memory, but don't save to persistence yet
+      _cvData = CVData(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        pdfFileName: 'Untitled_CV',
+      );
     } else {
       if (currentId != null) {
         final foundIndex = _savedCVs.indexWhere((cv) => cv.id == currentId);
@@ -38,12 +39,65 @@ class CVProvider with ChangeNotifier {
   CVData get cvData => _cvData;
   List<CVData> get savedCVs => _savedCVs;
 
+  /// Returns true when the current CV has no meaningful user-entered content.
+  bool get isCurrentCVEmpty {
+    final info = _cvData.personalInfo;
+    // Check all personal info fields are blank
+    final fieldsEmpty = info.fields.every((f) => f.value.trim().isEmpty);
+    // Check job title is blank
+    final jobTitleEmpty = info.jobTitle.trim().isEmpty;
+    // Check profile summary is blank (empty Quill doc is '[{"insert":"\n"}]' or '')
+    final summaryRaw = info.profileSummary.trim();
+    final summaryEmpty = summaryRaw.isEmpty ||
+        summaryRaw == '[{"insert":"\\n"}]' ||
+        summaryRaw == '[{"insert":"\n"}]';
+    // Check all list sections are empty
+    final sectionsEmpty = _cvData.experience.isEmpty &&
+        _cvData.education.isEmpty &&
+        _cvData.skills.isEmpty &&
+        _cvData.internships.isEmpty &&
+        _cvData.projects.isEmpty &&
+        _cvData.certifications.isEmpty &&
+        _cvData.references.isEmpty &&
+        _cvData.customSections.isEmpty;
+
+    return fieldsEmpty && jobTitleEmpty && summaryEmpty && sectionsEmpty;
+  }
+
+  /// Deletes the current blank CV from storage and loads the next available one.
+  Future<void> discardCurrentCV() async {
+    final idToDelete = _cvData.id;
+    await PersistenceService.deleteCV(idToDelete);
+    _savedCVs = PersistenceService.loadAllCVs();
+    if (_savedCVs.isNotEmpty) {
+      _cvData = _savedCVs.first;
+    } else {
+      // Just initialize in memory, don't save to persistence yet
+      _cvData = CVData(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        pdfFileName: 'New_CV',
+      );
+    }
+    notifyListeners();
+  }
+
   // Custom notify wrapper to handle auto-save
   Future<void> _notifyAndSave() async {
+    _cvData.lastModified = DateTime.now();
     notifyListeners();
     await PersistenceService.saveCV(_cvData);
     // Refresh the list
     _savedCVs = PersistenceService.loadAllCVs();
+  }
+
+  Future<void> saveCurrentCV() async {
+    await _notifyAndSave();
+  }
+
+  String get lastModifiedFormatted {
+    if (_cvData.lastModified == null) return 'Never';
+    final date = _cvData.lastModified!;
+    return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   }
 
   void createNewCV() {
@@ -72,7 +126,11 @@ class CVProvider with ChangeNotifier {
       if (_savedCVs.isNotEmpty) {
         _cvData = _savedCVs.first;
       } else {
-        createNewCV();
+        // Just initialize in memory
+        _cvData = CVData(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          pdfFileName: 'Untitled_CV',
+        );
       }
     }
     notifyListeners();
@@ -180,6 +238,20 @@ class CVProvider with ChangeNotifier {
     final String item = _cvData.sectionOrder.removeAt(oldIndex);
     _cvData.sectionOrder.insert(newIndex, item);
     _notifyAndSave();
+  }
+
+  void addSection(String key) {
+    if (!_cvData.sectionOrder.contains(key)) {
+      _cvData.sectionOrder.add(key);
+      _notifyAndSave();
+    }
+  }
+
+  void removeSection(String key) {
+    if (_cvData.sectionOrder.contains(key)) {
+      _cvData.sectionOrder.remove(key);
+      _notifyAndSave();
+    }
   }
 
   // --- Personal Info ---

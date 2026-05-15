@@ -295,6 +295,20 @@ class CustomSection {
         description: json['description'] ?? '',
         isVisible: json['isVisible'] ?? true,
       );
+
+  CustomSection copyWith({
+    String? id,
+    String? title,
+    String? description,
+    bool? isVisible,
+  }) {
+    return CustomSection(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      isVisible: isVisible ?? this.isVisible,
+    );
+  }
 }
 
 class SectionTitles {
@@ -379,6 +393,48 @@ class SectionTitles {
         projects: json['projects'] ?? 'Projects',
         showProjects: json['showProjects'] ?? true,
       );
+
+  SectionTitles copyWith({
+    String? personalInfo,
+    bool? showPersonalInfo,
+    String? professionalSummary,
+    bool? showProfessionalSummary,
+    String? experience,
+    bool? showExperience,
+    String? internships,
+    bool? showInternships,
+    String? education,
+    bool? showEducation,
+    String? skills,
+    bool? showSkills,
+    String? certifications,
+    bool? showCertifications,
+    String? references,
+    bool? showReferences,
+    String? projects,
+    bool? showProjects,
+  }) {
+    return SectionTitles(
+      personalInfo: personalInfo ?? this.personalInfo,
+      showPersonalInfo: showPersonalInfo ?? this.showPersonalInfo,
+      professionalSummary: professionalSummary ?? this.professionalSummary,
+      showProfessionalSummary: showProfessionalSummary ?? this.showProfessionalSummary,
+      experience: experience ?? this.experience,
+      showExperience: showExperience ?? this.showExperience,
+      internships: internships ?? this.internships,
+      showInternships: showInternships ?? this.showInternships,
+      education: education ?? this.education,
+      showEducation: showEducation ?? this.showEducation,
+      skills: skills ?? this.skills,
+      showSkills: showSkills ?? this.showSkills,
+      certifications: certifications ?? this.certifications,
+      showCertifications: showCertifications ?? this.showCertifications,
+      references: references ?? this.references,
+      showReferences: showReferences ?? this.showReferences,
+      projects: projects ?? this.projects,
+      showProjects: showProjects ?? this.showProjects,
+    );
+  }
 }
 
 class CVData {
@@ -400,7 +456,13 @@ class CVData {
   String pdfFileName;
   String templateId;
   String id;
+  DateTime? lastModified;
 
+  String get lastModifiedFormatted {
+    if (lastModified == null) return 'Never';
+    final date = lastModified!;
+    return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+  }
 
   CVData({
     this.id = 'default_cv',
@@ -421,6 +483,7 @@ class CVData {
     this.fontFamily = 'Poppins',
     this.pdfFileName = '',
     this.templateId = 'default',
+    this.lastModified,
 
   })  : personalInfo = personalInfo ?? PersonalInfo(),
 
@@ -437,12 +500,8 @@ class CVData {
           'personalInfo',
           'professionalSummary',
           'experience',
-          'internships',
           'education',
-          'projects',
           'skills',
-          'certifications',
-          'references'
         ];
 
   Map<String, dynamic> toJson() => {
@@ -464,6 +523,7 @@ class CVData {
         'pdfFileName': pdfFileName,
         'templateId': templateId,
         'id': id,
+        'lastModified': lastModified?.toIso8601String(),
       };
 
   factory CVData.fromJson(Map<String, dynamic> json) => CVData(
@@ -485,5 +545,50 @@ class CVData {
         pdfFileName: json['pdfFileName'] ?? '',
         templateId: json['templateId'] ?? 'default',
         id: json['id'] ?? 'default_cv',
+        lastModified: json['lastModified'] != null ? DateTime.parse(json['lastModified']) : null,
       );
+
+  CVData copyWith({
+    PersonalInfo? personalInfo,
+    SectionTitles? sectionTitles,
+    List<Education>? education,
+    List<Experience>? experience,
+    List<Internship>? internships,
+    List<Reference>? references,
+    List<Skill>? skills,
+    List<Certification>? certifications,
+    List<Project>? projects,
+    List<CustomSection>? customSections,
+    List<String>? sectionOrder,
+    double? baseFontSize,
+    double? lineHeight,
+    String? primaryColorHex,
+    String? fontFamily,
+    String? pdfFileName,
+    String? templateId,
+    String? id,
+    DateTime? lastModified,
+  }) {
+    return CVData(
+      personalInfo: personalInfo ?? this.personalInfo,
+      sectionTitles: sectionTitles ?? this.sectionTitles,
+      education: education ?? this.education,
+      experience: experience ?? this.experience,
+      internships: internships ?? this.internships,
+      references: references ?? this.references,
+      skills: skills ?? this.skills,
+      certifications: certifications ?? this.certifications,
+      projects: projects ?? this.projects,
+      customSections: customSections ?? this.customSections,
+      sectionOrder: sectionOrder ?? this.sectionOrder,
+      baseFontSize: baseFontSize ?? this.baseFontSize,
+      lineHeight: lineHeight ?? this.lineHeight,
+      primaryColorHex: primaryColorHex ?? this.primaryColorHex,
+      fontFamily: fontFamily ?? this.fontFamily,
+      pdfFileName: pdfFileName ?? this.pdfFileName,
+      templateId: templateId ?? this.templateId,
+      id: id ?? this.id,
+      lastModified: lastModified ?? this.lastModified,
+    );
+  }
 }
