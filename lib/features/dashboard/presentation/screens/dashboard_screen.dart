@@ -133,7 +133,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildSidebar(ColorScheme colorScheme) {
     return Container(
       width: 80,
-      color: Colors.white,
+      color: Colors.blue.shade800,
       child: Column(
         children: [
           const SizedBox(height: 32),
@@ -142,7 +142,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _buildSidebarItem(Icons.folder_open_outlined, Icons.folder_open, 'My CVs', 2),
           const Spacer(),
           IconButton(
-            icon: const Icon(Icons.settings_outlined),
+            icon: const Icon(Icons.settings_outlined, color: Colors.white70),
             onPressed: () {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
             },
@@ -161,15 +161,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          border: isSelected 
-            ? Border(left: BorderSide(color: Colors.blue.shade800, width: 4))
-            : null,
+          color: isSelected ? Colors.white.withValues(alpha: 0.15) : Colors.transparent,
+          border: isSelected
+              ? const Border(left: BorderSide(color: Colors.white, width: 4))
+              : null,
         ),
         child: Column(
           children: [
             Icon(
               isSelected ? activeIcon : icon,
-              color: isSelected ? Colors.blue.shade800 : Colors.grey.shade600,
+              color: isSelected ? Colors.white : Colors.white60,
               size: 28,
             ),
             const SizedBox(height: 4),
@@ -177,7 +178,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               label,
               style: TextStyle(
                 fontSize: 12,
-                color: isSelected ? Colors.blue.shade800 : Colors.grey.shade600,
+                color: isSelected ? Colors.white : Colors.white60,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),
