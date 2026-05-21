@@ -5,23 +5,21 @@ import 'dart:async';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
-
-import 'package:smartcv_builder/features/editor/presentation/providers/cv_provider.dart';
+import 'package:smartcv_builder/features/cover_letter/presentation/providers/cover_letter_provider.dart';
 import 'package:smartcv_builder/core/services/pdf_service.dart';
-import 'package:smartcv_builder/core/models/cv_data.dart';
+import 'package:smartcv_builder/core/models/cover_letter_data.dart';
 
-
-class DebouncedPdfPreview extends StatefulWidget {
-  final CVData data;
-  const DebouncedPdfPreview({super.key, required this.data});
+class DebouncedCoverLetterPreview extends StatefulWidget {
+  final CoverLetterData data;
+  const DebouncedCoverLetterPreview({super.key, required this.data});
 
   @override
-  State<DebouncedPdfPreview> createState() => _DebouncedPdfPreviewState();
+  State<DebouncedCoverLetterPreview> createState() => _DebouncedCoverLetterPreviewState();
 }
 
-class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
+class _DebouncedCoverLetterPreviewState extends State<DebouncedCoverLetterPreview> {
   Timer? _debounceTimer;
-  late CVData _previewData;
+  late CoverLetterData _previewData;
   double _maxPageWidth = 550.0;
   bool _isInitialLoad = true;
   bool _isUpdating = false;
@@ -42,7 +40,7 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
   }
 
   @override
-  void didUpdateWidget(DebouncedPdfPreview oldWidget) {
+  void didUpdateWidget(DebouncedCoverLetterPreview oldWidget) {
     super.didUpdateWidget(oldWidget);
     _debounceTimer?.cancel();
     setState(() => _isUpdating = true);
@@ -65,6 +63,8 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
 
   @override
   Widget build(BuildContext context) {
+    final isLinked = _previewData.linkedCvId != null;
+
     return Column(
       children: [
         Container(
@@ -77,16 +77,43 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
               _buildModernToolbarButton(
                 icon: Icons.dashboard_customize,
                 label: 'Layout',
-                onPressed: () => setState(() => _showTemplateSelector = !_showTemplateSelector),
-                isActive: _showTemplateSelector,
+                onPressed: isLinked
+                    ? null
+                    : () => setState(() => _showTemplateSelector = !_showTemplateSelector),
+                isActive: _showTemplateSelector && !isLinked,
+                disabledTooltip: 'Synced with resume layout',
               ),
               const VerticalDivider(width: 20, indent: 15, endIndent: 15),
               // Design/Style Settings
               _buildModernToolbarButton(
                 icon: Icons.auto_awesome,
                 label: 'Style',
-                onPressed: () => _showStyleBottomSheet(context),
+                onPressed: isLinked
+                    ? null
+                    : () => _showStyleBottomSheet(context),
+                disabledTooltip: 'Synced with resume style',
               ),
+              if (isLinked) ...[
+                const SizedBox(width: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.blue.shade100),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.link, size: 14, color: Colors.blue.shade800),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Synced with Resume',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.blue.shade800),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               const Spacer(),
               // Primary Actions
               _buildPrimaryActionButton(
@@ -94,8 +121,8 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
                 label: 'Download',
                 color: Colors.blue.shade700,
                 onPressed: () async {
-                  final bytes = await PDFService.generateCV(_previewData);
-                  final name = _previewData.pdfFileName.isNotEmpty ? _previewData.pdfFileName : 'My_CV';
+                  final bytes = await PDFService.generateCoverLetter(_previewData);
+                  final name = _previewData.pdfFileName.isNotEmpty ? _previewData.pdfFileName : 'Cover_Letter';
                   await Printing.sharePdf(bytes: bytes, filename: '$name.pdf');
                 },
               ),
@@ -107,8 +134,8 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
           child: Stack(
             children: [
               PdfPreview(
-                key: const ValueKey('cv_preview_stable'),
-                build: (format) => PDFService.generateCV(_previewData),
+                key: const ValueKey('cl_preview_stable'),
+                build: (format) => PDFService.generateCoverLetter(_previewData),
                 allowSharing: false,
                 allowPrinting: false,
                 canChangeOrientation: false,
@@ -128,7 +155,7 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
                   ),
                 ),
-              if (_showTemplateSelector)
+              if (_showTemplateSelector && !isLinked)
                 Positioned(
                   bottom: 16,
                   left: 16,
@@ -145,12 +172,14 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
   }
 
   Widget _buildLineHeightMenu(BuildContext context) {
+    final isLinked = widget.data.linkedCvId != null;
     return PopupMenuButton<double>(
       padding: EdgeInsets.zero,
-      icon: const Icon(Icons.format_line_spacing, size: 18, color: Colors.blueGrey),
-      tooltip: 'Line Height',
+      icon: Icon(Icons.format_line_spacing, size: 18, color: isLinked ? Colors.grey : Colors.blueGrey),
+      tooltip: isLinked ? 'Synced' : 'Line Height',
+      enabled: !isLinked,
       onSelected: (val) {
-        context.read<CVProvider>().updateLineHeight(val);
+        context.read<CoverLetterProvider>().updateStyling(lineHeight: val);
       },
       itemBuilder: (context) => [
         const PopupMenuItem(
@@ -167,35 +196,37 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
   }
 
   Widget _buildFontSizeMenu(BuildContext context) {
+    final isLinked = widget.data.linkedCvId != null;
     return PopupMenuButton<double>(
       offset: const Offset(0, 40),
-      tooltip: 'Font Size',
+      tooltip: isLinked ? 'Synced' : 'Font Size',
+      enabled: !isLinked,
       icon: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: Colors.blueGrey.shade50,
+          color: isLinked ? Colors.grey.shade100 : Colors.blueGrey.shade50,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.blueGrey.shade100),
+          border: Border.all(color: isLinked ? Colors.grey.shade200 : Colors.blueGrey.shade100),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.format_size, size: 14, color: Colors.blueGrey),
+            Icon(Icons.format_size, size: 14, color: isLinked ? Colors.grey : Colors.blueGrey),
             const SizedBox(width: 4),
             Text(
               widget.data.baseFontSize.round().toString(),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: Colors.blueGrey,
+                color: isLinked ? Colors.grey : Colors.blueGrey,
               ),
             ),
-            const Icon(Icons.keyboard_arrow_down, size: 12, color: Colors.blueGrey),
+            Icon(Icons.keyboard_arrow_down, size: 12, color: isLinked ? Colors.grey : Colors.blueGrey),
           ],
         ),
       ),
       onSelected: (val) {
-        context.read<CVProvider>().updateBaseFontSize(val);
+        context.read<CoverLetterProvider>().updateStyling(baseFontSize: val);
       },
       itemBuilder: (context) => [
         const PopupMenuItem(
@@ -212,15 +243,17 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
   }
 
   Widget _buildFontFamilyMenu(BuildContext context) {
+    final isLinked = widget.data.linkedCvId != null;
     return PopupMenuButton<String>(
       offset: const Offset(0, 40),
-      tooltip: 'Select Font',
+      tooltip: isLinked ? 'Synced' : 'Select Font',
+      enabled: !isLinked,
       icon: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: Colors.blue.shade50,
+          color: isLinked ? Colors.grey.shade100 : Colors.blue.shade50,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.blue.shade100),
+          border: Border.all(color: isLinked ? Colors.grey.shade200 : Colors.blue.shade100),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -230,16 +263,16 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
               style: _getFontItemStyle(widget.data.fontFamily).copyWith(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
-                color: Colors.blue.shade800,
+                color: isLinked ? Colors.grey : Colors.blue.shade800,
               ),
             ),
             const SizedBox(width: 2),
-            Icon(Icons.keyboard_arrow_down, size: 12, color: Colors.blue.shade800),
+            Icon(Icons.keyboard_arrow_down, size: 12, color: isLinked ? Colors.grey : Colors.blue.shade800),
           ],
         ),
       ),
       onSelected: (val) {
-        context.read<CVProvider>().updateFontFamily(val);
+        context.read<CoverLetterProvider>().updateStyling(fontFamily: val);
       },
       itemBuilder: (context) => [
         const PopupMenuItem(
@@ -277,8 +310,6 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
     );
   }
 
-
-
   Widget _buildBottomToolbar(BuildContext context) {
     return Container(
       height: 48,
@@ -293,8 +324,8 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
             icon: const Icon(Icons.print_outlined, size: 20, color: Colors.blueGrey),
             tooltip: 'Print',
             onPressed: () async {
-              final bytes = await PDFService.generateCV(_previewData);
-              final name = _previewData.pdfFileName.isNotEmpty ? _previewData.pdfFileName : 'My_CV';
+              final bytes = await PDFService.generateCoverLetter(_previewData);
+              final name = _previewData.pdfFileName.isNotEmpty ? _previewData.pdfFileName : 'Cover_Letter';
               await Printing.layoutPdf(onLayout: (format) => bytes, name: name);
             },
           ),
@@ -323,8 +354,42 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
     );
   }
 
-  Widget _buildModernToolbarButton({required IconData icon, required String label, required VoidCallback onPressed, bool isActive = false}) {
-    return InkWell(
+  Widget _buildLoadingWidget() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 50,
+            height: 50,
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue.shade700),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _isInitialLoad ? 'Loading fonts & content...' : 'Updating preview...',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: Colors.blueGrey.shade700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModernToolbarButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback? onPressed,
+    bool isActive = false,
+    String? disabledTooltip,
+  }) {
+    final isEnabled = onPressed != null;
+    Widget button = InkWell(
       onTap: onPressed,
       borderRadius: BorderRadius.circular(8),
       child: Container(
@@ -336,16 +401,45 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 20, color: isActive ? Colors.blue.shade700 : Colors.blueGrey.shade700),
+            Icon(
+              icon,
+              size: 20,
+              color: isEnabled
+                  ? (isActive ? Colors.blue.shade700 : Colors.blueGrey.shade700)
+                  : Colors.grey.shade300,
+            ),
             const SizedBox(height: 2),
-            Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isActive ? Colors.blue.shade700 : Colors.blueGrey.shade700)),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: isEnabled
+                    ? (isActive ? Colors.blue.shade700 : Colors.blueGrey.shade700)
+                    : Colors.grey.shade400,
+              ),
+            ),
           ],
         ),
       ),
     );
+
+    if (!isEnabled && disabledTooltip != null) {
+      button = Tooltip(
+        message: disabledTooltip,
+        child: button,
+      );
+    }
+
+    return button;
   }
 
-  Widget _buildPrimaryActionButton({required IconData icon, required String label, required Color color, required VoidCallback onPressed}) {
+  Widget _buildPrimaryActionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
     return ElevatedButton.icon(
       onPressed: onPressed,
       icon: Icon(icon, size: 18),
@@ -360,6 +454,84 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
     );
   }
 
+  Widget _buildTemplateSelectorOverlay(BuildContext context) {
+    return Card(
+      elevation: 6,
+      shadowColor: Colors.black26,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'SELECT LETTERHEAD LAYOUT',
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blueGrey),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 16, color: Colors.grey),
+                  onPressed: () => setState(() => _showTemplateSelector = false),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                )
+              ],
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 70,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: _availableTemplates.length,
+                itemBuilder: (context, index) {
+                  final t = _availableTemplates[index];
+                  final isSelected = widget.data.templateId == t['id'];
+
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: InkWell(
+                      onTap: () {
+                        context.read<CoverLetterProvider>().updateStyling(templateId: t['id']);
+                      },
+                      borderRadius: BorderRadius.circular(6),
+                      child: Container(
+                        width: 100,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: isSelected ? Colors.blue.shade50 : Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: isSelected ? Colors.blue : Colors.grey.shade200,
+                            width: isSelected ? 1.5 : 1,
+                          ),
+                        ),
+                        child: Text(
+                          t['name']!,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            color: isSelected ? Colors.blue.shade800 : Colors.blueGrey,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showStyleBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -368,7 +540,7 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-            final data = context.watch<CVProvider>().cvData;
+            final data = context.watch<CoverLetterProvider>().coverLetterData;
             return Container(
               padding: const EdgeInsets.all(24),
               child: Column(
@@ -433,181 +605,9 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
     );
   }
 
-  Widget _buildStyleOption({required String label, required IconData icon, required Widget child}) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: Colors.blueGrey),
-        const SizedBox(width: 12),
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.blueGrey)),
-        const Spacer(),
-        child,
-      ],
-    );
-  }
-
-  Widget _buildLoadingWidget() {
-    if (!_isInitialLoad) return const SizedBox.shrink();
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const CircularProgressIndicator(strokeWidth: 3),
-          const SizedBox(height: 20),
-          Text(
-            'SmartCV is crafting your masterpiece...',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.blue.shade700, fontSize: 15, fontWeight: FontWeight.bold),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTemplateSelectorOverlay(BuildContext context) {
-    final currentTemplate = context.watch<CVProvider>().cvData.templateId;
-    
-    return Material(
-      elevation: 8,
-      borderRadius: BorderRadius.circular(16),
-      color: Colors.white,
-      child: Container(
-        height: 180,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Select Template', 
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close, size: 18),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  onPressed: () => setState(() => _showTemplateSelector = false),
-                )
-              ],
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: _availableTemplates.length,
-                separatorBuilder: (context, index) => const SizedBox(width: 12),
-                itemBuilder: (context, index) {
-                  final template = _availableTemplates[index];
-                  final isSelected = currentTemplate == template['id'];
-                  
-                  return GestureDetector(
-                    onTap: () {
-                      context.read<CVProvider>().changeTemplate(template['id']!);
-                    },
-                    child: Column(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            width: 90,
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: isSelected ? Colors.blue : Colors.grey.shade300,
-                                width: isSelected ? 2.5 : 1,
-                              ),
-                              boxShadow: isSelected ? [
-                                BoxShadow(
-                                  color: Colors.blue.withValues(alpha: 0.2),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                )
-                              ] : null,
-                            ),
-                            child: _buildTemplateLayoutPreview(template['id']!, isSelected),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          template['name']!,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            color: isSelected ? Colors.blue.shade800 : Colors.blueGrey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  PopupMenuItem<String> _buildFontItem(String value, String label, String current) {
-    return PopupMenuItem<String>(
-      value: value,
-      child: Row(
-        children: [
-          SizedBox(
-            width: 24,
-            child: current == value ? const Icon(Icons.check, size: 16) : null,
-          ),
-          Expanded(
-            child: Text(label, style: _getFontItemStyle(value)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  TextStyle _getFontItemStyle(String value) {
-    String family = value;
-    if (value == 'Poppins' || value == 'BundledPoppins') family = 'BundledPoppins';
-    if (value == 'Tinos' || value == 'BundledTinos') family = 'BundledTinos';
-    if (value == 'Roboto') family = 'Roboto';
-
-    if (family.startsWith('Bundled')) {
-      return TextStyle(fontFamily: family, fontSize: 13);
-    }
-    return GoogleFonts.getFont(value, fontSize: 13);
-  }
-
-  PopupMenuItem<double> _buildLineHeightItem(double value, String label, double current) {
-    return PopupMenuItem<double>(
-      value: value,
-      child: Row(
-        children: [
-          SizedBox(width: 24, child: current == value ? const Icon(Icons.check, size: 16) : null),
-          Text(label),
-        ],
-      ),
-    );
-  }
-
-  PopupMenuItem<double> _buildFontSizeItem(double value, String label, double current) {
-    return PopupMenuItem<double>(
-      value: value,
-      child: Row(
-        children: [
-          SizedBox(width: 24, child: current == value ? const Icon(Icons.check, size: 16) : null),
-          Text(label),
-        ],
-      ),
-    );
-  }
-
   void _showColorPicker(BuildContext context) {
-    final provider = context.read<CVProvider>();
-    Color pickerColor = Color(int.parse(provider.cvData.primaryColorHex.replaceFirst('#', '0xff')));
+    final provider = context.read<CoverLetterProvider>();
+    Color pickerColor = Color(int.parse(provider.coverLetterData.primaryColorHex.replaceFirst('#', '0xff')));
     
     final commonColors = [
       {'color': const Color(0xFF2C3E50), 'label': 'Navy'},
@@ -690,7 +690,7 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
                   child: const Text('Apply'),
                   onPressed: () {
                     final hex = '#${pickerColor.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}';
-                    provider.updatePrimaryColor(hex);
+                    provider.updateStyling(primaryColorHex: hex);
                     Navigator.of(context).pop();
                   },
                 ),
@@ -702,81 +702,92 @@ class _DebouncedPdfPreviewState extends State<DebouncedPdfPreview> {
     );
   }
 
-  Widget _buildTemplateLayoutPreview(String id, bool isSelected) {
-    final primary = isSelected ? Colors.blue : Colors.grey.shade400;
-    final secondary = isSelected ? Colors.blue.withValues(alpha: 0.3) : Colors.grey.shade300;
+  Widget _buildStyleOption({required String label, required IconData icon, required Widget child}) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: Colors.blueGrey),
+        const SizedBox(width: 12),
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.blueGrey)),
+        const Spacer(),
+        child,
+      ],
+    );
+  }
 
-    return Padding(
-      padding: const EdgeInsets.all(8),
-      child: Column(
+  PopupMenuEntry<double> _buildLineHeightItem(double val, String label, double current) {
+    final isSelected = val == current;
+    return PopupMenuItem<double>(
+      value: val,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Header
-          Container(
-            height: 6,
-            width: double.infinity,
-            decoration: BoxDecoration(color: primary, borderRadius: BorderRadius.circular(2)),
-          ),
-          const SizedBox(height: 4),
-          // Body layout simulation
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (id == 'modern' || id == 'creative') ...[
-                  // Sidebar
-                  Container(
-                    width: 15,
-                    color: secondary,
-                  ),
-                  const SizedBox(width: 4),
-                ],
-                // Main content lines
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: List.generate(
-                      8,
-                      (i) => Container(
-                        height: 2,
-                        width: (i % 3 == 0) ? double.infinity : (i % 2 == 0) ? 40 : 20,
-                        margin: const EdgeInsets.only(bottom: 3),
-                        decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(1)),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          Text(label, style: const TextStyle(fontSize: 13)),
+          if (isSelected) const Icon(Icons.check, size: 14, color: Colors.blue),
         ],
       ),
     );
   }
-}
 
-
-class FullScreenPreview extends StatelessWidget {
-  final CVData data;
-  const FullScreenPreview({super.key, required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('CV Preview', style: TextStyle(fontSize: 16)),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.blueGrey.shade800,
-        elevation: 0.5,
-      ),
-      body: PdfPreview(
-        build: (format) => PDFService.generateCV(data),
-        allowSharing: true,
-        allowPrinting: true,
-        canChangeOrientation: false,
-        canChangePageFormat: false,
-        canDebug: false,
-        loadingWidget: const Center(child: CircularProgressIndicator()),
+  PopupMenuEntry<double> _buildFontSizeItem(double val, String label, double current) {
+    final isSelected = val == current;
+    return PopupMenuItem<double>(
+      value: val,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 13)),
+          if (isSelected) const Icon(Icons.check, size: 14, color: Colors.blue),
+        ],
       ),
     );
+  }
+
+  PopupMenuEntry<String> _buildFontItem(String val, String label, String current) {
+    final isSelected = val == current;
+    return PopupMenuItem<String>(
+      value: val,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: _getFontItemStyle(val).copyWith(fontSize: 13),
+          ),
+          if (isSelected) const Icon(Icons.check, size: 14, color: Colors.blue),
+        ],
+      ),
+    );
+  }
+
+  TextStyle _getFontItemStyle(String fontFamily) {
+    switch (fontFamily) {
+      case 'Arimo':
+        return GoogleFonts.arimo();
+      case 'Carlito':
+        return GoogleFonts.carlito();
+      case 'Courier Prime':
+        return GoogleFonts.courierPrime();
+      case 'Open Sans':
+        return GoogleFonts.openSans();
+      case 'Gelasio':
+        return GoogleFonts.gelasio();
+      case 'Lato':
+        return GoogleFonts.lato();
+      case 'Noto Sans':
+        return GoogleFonts.notoSans();
+      case 'Noto Serif':
+        return GoogleFonts.notoSerif();
+      case 'Source Sans 3':
+        return GoogleFonts.sourceSans3();
+      case 'Roboto':
+        return GoogleFonts.roboto();
+      case 'BundledTinos':
+      case 'Tinos':
+        return GoogleFonts.tinos();
+      case 'BundledPoppins':
+      case 'Poppins':
+      default:
+        return GoogleFonts.poppins();
+    }
   }
 }

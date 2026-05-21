@@ -158,23 +158,23 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
               child: const Text('Keep Editing'),
             ),
             OutlinedButton(
-              onPressed: () => Navigator.of(ctx).pop('draft'),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              child: const Text('Keep as Draft'),
+            onPressed: () => Navigator.of(ctx).pop('draft'),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(ctx).pop('discard'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red.shade600,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              child: const Text('Discard'),
+            child: const Text('Keep as Draft'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop('discard'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade600,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
+            child: const Text('Discard'),
+          ),
           ],
         ),
       );

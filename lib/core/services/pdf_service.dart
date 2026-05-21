@@ -2,12 +2,14 @@ import 'package:flutter/services.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:smartcv_builder/core/models/cv_data.dart';
+import 'package:smartcv_builder/core/models/cover_letter_data.dart';
 import 'package:smartcv_builder/core/services/templates/cv_template.dart';
 import 'package:smartcv_builder/core/services/templates/default_template.dart';
 import 'package:smartcv_builder/core/services/templates/modern_template.dart';
 import 'package:smartcv_builder/core/services/templates/metro_template.dart';
 import 'package:smartcv_builder/core/services/templates/executive_template.dart';
 import 'package:smartcv_builder/core/services/templates/creative_template.dart';
+import 'package:smartcv_builder/core/services/templates/cover_letter_templates.dart';
 
 class PDFService {
   static String? _currentFontFamily;
@@ -186,5 +188,16 @@ class PDFService {
     }
 
     return template.generate(data, regular, bold, italic, boldItalic);
+  }
+
+  static Future<Uint8List> generateCoverLetter(CoverLetterData data) async {
+    await _loadFonts(data.fontFamily);
+
+    final regular = _fontRegular ?? await _loadFontSafe(PdfGoogleFonts.poppinsRegular, 'fonts/Poppins-Regular.ttf');
+    final bold = _fontBold ?? await _loadFontSafe(PdfGoogleFonts.poppinsBold, 'fonts/Poppins-Bold.ttf');
+    final italic = _fontItalic ?? await _loadFontSafe(PdfGoogleFonts.poppinsItalic, 'fonts/Poppins-Regular.ttf');
+    final boldItalic = _fontBoldItalic ?? await _loadFontSafe(PdfGoogleFonts.poppinsBoldItalic, 'fonts/Poppins-Bold.ttf');
+
+    return CoverLetterTemplates.generate(data, regular, bold, italic, boldItalic);
   }
 }

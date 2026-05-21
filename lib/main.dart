@@ -7,6 +7,7 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 import 'core/theme/app_theme.dart';
 import 'features/editor/presentation/providers/cv_provider.dart';
+import 'features/cover_letter/presentation/providers/cover_letter_provider.dart';
 import 'features/settings/presentation/providers/theme_provider.dart';
 import 'features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'core/services/pdf_service.dart';
@@ -35,6 +36,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => CVProvider()),
+        ChangeNotifierProvider(create: (_) => CoverLetterProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: const MyApp(),
