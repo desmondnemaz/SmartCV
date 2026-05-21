@@ -12,10 +12,12 @@ jobs:
       - uses: actions/checkout@v4
 
       # 2. Set up the Flutter environment on the virtual machine
-      - name: Install Flutter
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.41.8'
           channel: 'stable'
+          cache: true # Optional: keeps your builds fast!
 
       # 3. Get your project dependencies (the 'pubspec.yaml' stuff)
       - name: Get dependencies
