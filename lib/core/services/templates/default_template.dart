@@ -22,13 +22,13 @@ class DefaultTemplate implements CVTemplate {
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4.copyWith(
           marginTop: 36.0,
-          marginBottom: 72.0, // 1 inch
+          marginBottom: 36.0, // Reduced from 72.0
           marginLeft: CVTheme.pageMargin,
           marginRight: CVTheme.pageMargin,
         ),
         margin: pw.EdgeInsets.only(
           top: 36.0,
-          bottom: 72.0, // 1 inch
+          bottom: 36.0, // Reduced from 72.0
           left: CVTheme.pageMargin,
           right: CVTheme.pageMargin,
         ),
@@ -44,6 +44,10 @@ class DefaultTemplate implements CVTemplate {
           ];
 
           for (final sectionKey in data.sectionOrder) {
+            if (data.pageBreaks.contains(sectionKey)) {
+              content.add(pw.NewPage());
+            }
+
             if (sectionKey.startsWith('custom_')) {
               final customIndex = data.customSections.indexWhere((s) => s.id == sectionKey);
               if (customIndex != -1) {

@@ -24,8 +24,13 @@ class ExecutiveTemplate implements CVTemplate {
 
     pdf.addPage(
       pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(CVTheme.pageMargin),
+        pageFormat: PdfPageFormat.a4.copyWith(
+          marginTop: 36.0,
+          marginBottom: 36.0,
+          marginLeft: CVTheme.pageMargin,
+          marginRight: CVTheme.pageMargin,
+        ),
+        margin: const pw.EdgeInsets.symmetric(horizontal: CVTheme.pageMargin),
         build: (pw.Context context) {
           final List<pw.Widget> content = [];
 
@@ -35,6 +40,10 @@ class ExecutiveTemplate implements CVTemplate {
 
           // 2. Sections based on Order
           for (final sectionKey in data.sectionOrder) {
+            if (data.pageBreaks.contains(sectionKey)) {
+              content.add(pw.NewPage());
+            }
+
             pw.Widget? sectionWidget;
 
             if (sectionKey == 'professionalSummary' && data.sectionTitles.showProfessionalSummary && data.personalInfo.profileSummary.isNotEmpty) {

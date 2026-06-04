@@ -9,12 +9,18 @@ class ExpandableSectionTitle extends StatelessWidget {
   
   /// Whether the section is currently set to be visible on the generated CV.
   final bool isVisibleOnCv;
+
+  /// Whether the section should start on a new page.
+  final bool startsOnNewPage;
   
   /// Callback triggered when the user renames the section.
   final Function(String newTitle) onTitleRenamed;
   
   /// Callback triggered when the visibility toggle is pressed.
   final VoidCallback onVisibilityToggled;
+
+  /// Callback triggered when the new page toggle is pressed.
+  final VoidCallback? onToggleNewPage;
   
   /// Optional callback triggered when the delete action is pressed.
   /// If null, the delete option is hidden.
@@ -24,8 +30,10 @@ class ExpandableSectionTitle extends StatelessWidget {
     super.key,
     required this.sectionTitle,
     required this.isVisibleOnCv,
+    this.startsOnNewPage = false,
     required this.onTitleRenamed,
     required this.onVisibilityToggled,
+    this.onToggleNewPage,
     this.onSectionRemoved,
   });
 
@@ -74,6 +82,10 @@ class ExpandableSectionTitle extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+              if (startsOnNewPage) ...[
+                const SizedBox(width: 8),
+                const Icon(Icons.insert_page_break_outlined, size: 16, color: Colors.blue),
+              ],
               if (!isVisibleOnCv) ...[
                 const SizedBox(width: 8),
                 const Icon(Icons.visibility_off, size: 16, color: Colors.grey),
@@ -88,6 +100,8 @@ class ExpandableSectionTitle extends StatelessWidget {
               _promptRenameDialog(context);
             } else if (selectedAction == 'toggle_visibility') {
               onVisibilityToggled();
+            } else if (selectedAction == 'toggle_new_page' && onToggleNewPage != null) {
+              onToggleNewPage!();
             } else if (selectedAction == 'remove' && onSectionRemoved != null) {
               onSectionRemoved!();
             }
@@ -103,6 +117,24 @@ class ExpandableSectionTitle extends StatelessWidget {
                 ],
               ),
             ),
+            if (onToggleNewPage != null)
+              PopupMenuItem(
+                value: 'toggle_new_page',
+                child: Row(
+                  children: [
+                    Icon(
+                      startsOnNewPage ? Icons.vertical_align_bottom : Icons.insert_page_break_outlined, 
+                      size: 20, 
+                      color: startsOnNewPage ? Colors.blue : null,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      startsOnNewPage ? 'Keep on same page' : 'Start on new page', 
+                      style: TextStyle(color: startsOnNewPage ? Colors.blue : null),
+                    ),
+                  ],
+                ),
+              ),
             PopupMenuItem(
               value: 'toggle_visibility',
               child: Row(

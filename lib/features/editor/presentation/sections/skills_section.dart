@@ -9,22 +9,27 @@ class SkillsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<CVProvider, (List<Skill>, SectionTitles)>(
-      selector: (_, p) => (List.from(p.cvData.skills), p.cvData.sectionTitles),
+    return Selector<CVProvider, (List<Skill>, SectionTitles, bool)>(
+      selector: (_, p) => (List.from(p.cvData.skills), p.cvData.sectionTitles, p.cvData.pageBreaks.contains('skills')),
       builder: (context, data, _) {
         final list = data.$1;
         final titles = data.$2;
+        final startsOnNewPage = data.$3;
         final provider = context.read<CVProvider>();
         return ExpansionTile(
           leading: const Icon(Icons.star),
           title: ExpandableSectionTitle(
             sectionTitle: titles.skills,
             isVisibleOnCv: titles.showSkills,
+            startsOnNewPage: startsOnNewPage,
             onTitleRenamed: (newTitle) {
               provider.updateSectionTitles(titles.copyWith(skills: newTitle));
             },
             onVisibilityToggled: () {
               provider.updateSectionTitles(titles.copyWith(showSkills: !titles.showSkills));
+            },
+            onToggleNewPage: () {
+              provider.togglePageBreak('skills');
             },
             onSectionRemoved: () {
               provider.removeSection('skills');

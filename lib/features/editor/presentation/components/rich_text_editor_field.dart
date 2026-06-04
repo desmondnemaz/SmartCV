@@ -93,7 +93,7 @@ class _RichTextEditorFieldState extends State<RichTextEditorField> {
             children: [
               fq.QuillSimpleToolbar(
                 controller: _quillController,
-                config: const fq.QuillSimpleToolbarConfig(
+                config: fq.QuillSimpleToolbarConfig(
                   showInlineCode: false,
                   showCodeBlock: false,
                   showSubscript: false,
@@ -122,6 +122,30 @@ class _RichTextEditorFieldState extends State<RichTextEditorField> {
                   showUndo: true,
                   showRedo: true,
                   multiRowsDisplay: false,
+                  buttonOptions: fq.QuillSimpleToolbarButtonOptions(
+                    base: fq.QuillToolbarBaseButtonOptions(
+                      iconTheme: fq.QuillIconTheme(
+                        // Selected button: blue icon on a light grey background
+                        iconButtonSelectedData: fq.IconButtonData(
+                          color: Colors.blue,
+                          style: ButtonStyle(
+                            backgroundColor: WidgetStateProperty.all(
+                              Colors.black12,
+                            ),
+                          ),
+                        ),
+                        // Unselected button: dark grey icon, transparent bg
+                        iconButtonUnselectedData: fq.IconButtonData(
+                          color: Colors.grey.shade700,
+                          style: ButtonStyle(
+                            backgroundColor: WidgetStateProperty.all(
+                              Colors.transparent,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
               const Divider(height: 1),

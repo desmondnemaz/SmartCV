@@ -10,11 +10,12 @@ class ExperienceSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<CVProvider, (List<Experience>, SectionTitles)>(
-      selector: (_, p) => (List.from(p.cvData.experience), p.cvData.sectionTitles),
+    return Selector<CVProvider, (List<Experience>, SectionTitles, bool)>(
+      selector: (_, p) => (List.from(p.cvData.experience), p.cvData.sectionTitles, p.cvData.pageBreaks.contains('experience')),
       builder: (context, data, _) {
         final list = data.$1;
         final titles = data.$2;
+        final startsOnNewPage = data.$3;
         final provider = context.read<CVProvider>();
         
         return ExpansionTile(
@@ -22,11 +23,15 @@ class ExperienceSection extends StatelessWidget {
           title: ExpandableSectionTitle(
             sectionTitle: titles.experience,
             isVisibleOnCv: titles.showExperience,
+            startsOnNewPage: startsOnNewPage,
             onTitleRenamed: (newTitle) {
               provider.updateSectionTitles(titles.copyWith(experience: newTitle));
             },
             onVisibilityToggled: () {
               provider.updateSectionTitles(titles.copyWith(showExperience: !titles.showExperience));
+            },
+            onToggleNewPage: () {
+              provider.togglePageBreak('experience');
             },
             onSectionRemoved: () {
               provider.removeSection('experience');

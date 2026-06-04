@@ -143,7 +143,7 @@ class CVProvider with ChangeNotifier {
         jobTitle: 'Senior Software Engineer',
         headerAlignment: 'left',
         showNameAsHeader: true,
-        profileSummary: '[{"insert":"Experienced software engineer with a passion for developing innovative programs that expedite the efficiency and effectiveness of organizational success. Well-versed in technology and writing code to create systems that are reliable and user-friendly.\\n"}]',
+        profileSummary: '[{"insert":"Experienced software engineer with a passion for developing innovative programs that expedite the efficiency and effectiveness of organizational success. Well-versed in technology and writing code to create systems that are reliable and user-friendly. Dedicated to continuous learning and mentoring junior developers to foster a collaborative and high-performing team environment.\\n"}]',
         fields: [
           CVField(title: 'Name', value: 'John Doe', isCompulsory: true),
           CVField(title: 'Email', value: 'john.doe@example.com', isCompulsory: true),
@@ -151,31 +151,46 @@ class CVProvider with ChangeNotifier {
           CVField(title: 'Address', value: 'San Francisco, CA, USA', isCompulsory: true),
           CVField(title: 'LinkedIn', value: 'linkedin.com/in/johndoe', isCompulsory: false),
           CVField(title: 'GitHub', value: 'github.com/johndoe', isCompulsory: false),
+          CVField(title: 'Website', value: 'johndoe.dev', isCompulsory: false),
         ],
       ),
       education: [
         Education(
           institution: 'University of California, Berkeley',
+          degree: 'Master of Science in Computer Science',
+          startDate: 'Aug 2019',
+          endDate: 'May 2021',
+          description: '[{"insert":"Specialized in Machine Learning and Artificial Intelligence. Thesis on predictive models for healthcare.\\n"}]',
+        ),
+        Education(
+          institution: 'University of California, Berkeley',
           degree: 'Bachelor of Science in Computer Science',
           startDate: 'Aug 2015',
           endDate: 'May 2019',
-          description: '[{"insert":"Graduated with Honors. Coursework included Data Structures, Algorithms, Database Systems, and Artificial Intelligence.\\n"}]',
+          description: '[{"insert":"Graduated with Honors. Coursework included Data Structures, Algorithms, Database Systems, and Artificial Intelligence. President of the Computer Science Society.\\n"}]',
         ),
       ],
       experience: [
         Experience(
           company: 'Tech Solutions Inc.',
-          position: 'Software Engineer',
-          startDate: 'Jun 2019',
+          position: 'Senior Software Engineer',
+          startDate: 'Jan 2022',
           endDate: 'Present',
-          description: '[{"insert":"Developed and maintained web applications using React and Node.js."},{"attributes":{"list":"bullet"},"insert":"\\n"},{"insert":"Collaborated with cross-functional teams to define, design, and ship new features."},{"attributes":{"list":"bullet"},"insert":"\\n"},{"insert":"Improved application performance by 30% through code optimization."},{"attributes":{"list":"bullet"},"insert":"\\n"}]',
+          description: '[{"insert":"Lead developer for the core microservices architecture using Go and Node.js."},{"attributes":{"list":"bullet"},"insert":"\\n"},{"insert":"Mentored a team of 5 junior and mid-level developers, improving overall team velocity by 25%."},{"attributes":{"list":"bullet"},"insert":"\\n"},{"insert":"Architected a scalable real-time data processing pipeline that handles 1M+ events per day."},{"attributes":{"list":"bullet"},"insert":"\\n"}]',
         ),
         Experience(
           company: 'InnovateTech',
+          position: 'Software Engineer',
+          startDate: 'Jun 2019',
+          endDate: 'Dec 2021',
+          description: '[{"insert":"Developed and maintained web applications using React and Node.js."},{"attributes":{"list":"bullet"},"insert":"\\n"},{"insert":"Collaborated with cross-functional teams to define, design, and ship new features."},{"attributes":{"list":"bullet"},"insert":"\\n"},{"insert":"Improved application performance by 30% through code optimization and database indexing."},{"attributes":{"list":"bullet"},"insert":"\\n"},{"insert":"Implemented robust CI/CD pipelines using GitHub Actions and Docker."},{"attributes":{"list":"bullet"},"insert":"\\n"}]',
+        ),
+        Experience(
+          company: 'Startup Hub',
           position: 'Junior Developer',
           startDate: 'Jan 2018',
           endDate: 'May 2019',
-          description: '[{"insert":"Assisted in the development of a mobile application using Flutter."},{"attributes":{"list":"bullet"},"insert":"\\n"},{"insert":"Wrote unit and integration tests to ensure code quality."},{"attributes":{"list":"bullet"},"insert":"\\n"},{"insert":"Participated in daily stand-ups and sprint planning meetings."},{"attributes":{"list":"bullet"},"insert":"\\n"}]',
+          description: '[{"insert":"Assisted in the development of a mobile application using Flutter and Dart."},{"attributes":{"list":"bullet"},"insert":"\\n"},{"insert":"Wrote unit and integration tests to ensure code quality."},{"attributes":{"list":"bullet"},"insert":"\\n"},{"insert":"Participated in daily stand-ups and sprint planning meetings."},{"attributes":{"list":"bullet"},"insert":"\\n"}]',
         ),
       ],
       internships: [
@@ -190,10 +205,16 @@ class CVProvider with ChangeNotifier {
       skills: [
         Skill(name: 'Dart & Flutter'),
         Skill(name: 'JavaScript / TypeScript'),
-        Skill(name: 'React & Node.js'),
+        Skill(name: 'React & Next.js'),
+        Skill(name: 'Node.js & Express'),
         Skill(name: 'Python & Django'),
-        Skill(name: 'Git & GitHub'),
+        Skill(name: 'Go (Golang)'),
+        Skill(name: 'SQL & PostgreSQL'),
+        Skill(name: 'Docker & Kubernetes'),
+        Skill(name: 'AWS & GCP Cloud Services'),
+        Skill(name: 'Git & CI/CD'),
         Skill(name: 'Agile Methodologies'),
+        Skill(name: 'System Architecture'),
       ],
       certifications: [
         Certification(
@@ -203,14 +224,28 @@ class CVProvider with ChangeNotifier {
           description: '[{"insert":"Demonstrated expertise in designing distributed systems on AWS.\\n"}]',
           isCompleted: true,
         ),
+        Certification(
+          title: 'Google Cloud Professional Cloud Architect',
+          issuer: 'Google Cloud',
+          date: 'Mar 2023',
+          description: '[{"insert":"Certified in designing, developing, and managing robust, secure, and dynamic solutions to drive business objectives.\\n"}]',
+          isCompleted: true,
+        ),
       ],
       references: [
         Reference(
           name: 'Jane Smith',
-          position: 'Engineering Manager',
+          position: 'Director of Engineering',
           company: 'Tech Solutions Inc.',
           email: 'jane.smith@example.com',
           phone: '+1 (555) 987-6543',
+        ),
+        Reference(
+          name: 'Robert Johnson',
+          position: 'Senior Product Manager',
+          company: 'InnovateTech',
+          email: 'robert.johnson@example.com',
+          phone: '+1 (555) 111-2222',
         ),
       ],
       projects: [
@@ -219,7 +254,21 @@ class CVProvider with ChangeNotifier {
           link: 'smartcv-zw.web.app',
           startDate: 'Apr 2024',
           endDate: 'Present',
-          description: '[{"insert":"Open-source Flutter application for building professional CVs with live PDF preview.\\n"}]',
+          description: '[{"insert":"Open-source Flutter application for building professional CVs with live PDF preview."},{"attributes":{"list":"bullet"},"insert":"\\n"},{"insert":"Implemented complex state management using Provider."},{"attributes":{"list":"bullet"},"insert":"\\n"},{"insert":"Integrated pdf generation with custom themes and robust customizable sections."},{"attributes":{"list":"bullet"},"insert":"\\n"}]',
+        ),
+        Project(
+          title: 'E-commerce Platform API',
+          link: 'github.com/johndoe/ecommerce-api',
+          startDate: 'Jan 2023',
+          endDate: 'Jun 2023',
+          description: '[{"insert":"RESTful API built with Node.js, Express, and PostgreSQL."},{"attributes":{"list":"bullet"},"insert":"\\n"},{"insert":"Features include user authentication, product management, and payment processing integration."},{"attributes":{"list":"bullet"},"insert":"\\n"}]',
+        ),
+        Project(
+          title: 'Real-time Chat Application',
+          link: 'github.com/johndoe/realtime-chat',
+          startDate: 'Sep 2021',
+          endDate: 'Dec 2021',
+          description: '[{"insert":"Real-time messaging application built with React, Node.js, and Socket.io. Deployed on AWS."},{"attributes":{"list":"bullet"},"insert":"\\n"}]',
         ),
       ],
     );
@@ -250,8 +299,18 @@ class CVProvider with ChangeNotifier {
   void removeSection(String key) {
     if (_cvData.sectionOrder.contains(key)) {
       _cvData.sectionOrder.remove(key);
+      _cvData.pageBreaks.remove(key);
       _notifyAndSave();
     }
+  }
+
+  void togglePageBreak(String key) {
+    if (_cvData.pageBreaks.contains(key)) {
+      _cvData.pageBreaks.remove(key);
+    } else {
+      _cvData.pageBreaks.add(key);
+    }
+    _notifyAndSave();
   }
 
   // --- Personal Info ---

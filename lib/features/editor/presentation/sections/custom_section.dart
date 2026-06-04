@@ -12,9 +12,14 @@ class CustomSectionWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<CVProvider, CustomSection?>(
-      selector: (_, p) => p.cvData.customSections.cast<CustomSection?>().firstWhere((s) => s?.id == id, orElse: () => null),
-      builder: (context, section, _) {
+    return Selector<CVProvider, (CustomSection?, bool)>(
+      selector: (context, p) {
+        final section = p.cvData.customSections.cast<CustomSection?>().firstWhere((s) => s?.id == id, orElse: () => null);
+        return (section, p.cvData.pageBreaks.contains(id));
+      },
+      builder: (context, data, _) {
+        final section = data.$1;
+        final startsOnNewPage = data.$2;
         final provider = context.read<CVProvider>();
         
         if (section == null) return const SizedBox.shrink();
@@ -24,11 +29,15 @@ class CustomSectionWidget extends StatelessWidget {
           title: ExpandableSectionTitle(
             sectionTitle: section.title,
             isVisibleOnCv: section.isVisible,
+            startsOnNewPage: startsOnNewPage,
             onTitleRenamed: (newTitle) {
               provider.updateCustomSection(id, section.copyWith(title: newTitle));
             },
             onVisibilityToggled: () {
               provider.updateCustomSection(id, section.copyWith(isVisible: !section.isVisible));
+            },
+            onToggleNewPage: () {
+              provider.togglePageBreak(section.id);
             },
             onSectionRemoved: () {
               provider.removeCustomSection(id);

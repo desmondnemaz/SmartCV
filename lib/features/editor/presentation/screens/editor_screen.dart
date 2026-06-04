@@ -508,7 +508,7 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
 
 
 
-  Widget _buildSectionHeader(BuildContext context, String currentTitle, bool isVisible, Function(String) onRename, VoidCallback onToggleVisibility, [VoidCallback? onRemove]) {
+  Widget _buildSectionHeader(BuildContext context, String currentTitle, bool isVisible, bool startsOnNewPage, Function(String) onRename, VoidCallback onToggleVisibility, VoidCallback? onToggleNewPage, [VoidCallback? onRemove]) {
     return Row(
       children: [
         Expanded(
@@ -521,6 +521,10 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+              if (startsOnNewPage) ...[
+                const SizedBox(width: 8),
+                const Icon(Icons.insert_page_break_outlined, size: 16, color: Colors.blue),
+              ],
               if (!isVisible) ...[
                 const SizedBox(width: 8),
                 const Icon(Icons.visibility_off, size: 16, color: Colors.grey),
@@ -535,6 +539,8 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
               _showRenameDialog(context, currentTitle, onRename);
             } else if (val == 'toggle_visibility') {
               onToggleVisibility();
+            } else if (val == 'toggle_new_page' && onToggleNewPage != null) {
+              onToggleNewPage();
             } else if (val == 'remove' && onRemove != null) {
               onRemove();
             }
@@ -550,6 +556,24 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
                 ],
               ),
             ),
+            if (onToggleNewPage != null)
+              PopupMenuItem(
+                value: 'toggle_new_page',
+                child: Row(
+                  children: [
+                    Icon(
+                      startsOnNewPage ? Icons.vertical_align_bottom : Icons.insert_page_break_outlined, 
+                      size: 20, 
+                      color: startsOnNewPage ? Colors.blue : null,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      startsOnNewPage ? 'Keep on same page' : 'Start on new page', 
+                      style: TextStyle(color: startsOnNewPage ? Colors.blue : null),
+                    ),
+                  ],
+                ),
+              ),
             PopupMenuItem(
               value: 'toggle_visibility',
               child: Row(
@@ -613,11 +637,11 @@ class _CVEditorScreenState extends State<CVEditorScreen> {
         
         return ExpansionTile(
           leading: const Icon(Icons.person),
-          title: _buildSectionHeader(context, titles.personalInfo, titles.showPersonalInfo, (val) {
+          title: _buildSectionHeader(context, titles.personalInfo, titles.showPersonalInfo, false, (val) {
             provider.updateSectionTitles(titles.copyWith(personalInfo: val));
           }, () {
             provider.updateSectionTitles(titles.copyWith(showPersonalInfo: !titles.showPersonalInfo));
-          }),
+          }, null),
           childrenPadding: const EdgeInsets.all(16),
           children: [
             ..._fieldControllers.asMap().entries.map((entry) {

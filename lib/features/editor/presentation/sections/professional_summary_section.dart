@@ -10,9 +10,10 @@ class ProfessionalSummarySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<CVProvider, SectionTitles>(
-      selector: (_, p) => p.cvData.sectionTitles,
-      builder: (context, titles, _) {
+    return Selector<CVProvider, (SectionTitles, bool)>(
+      selector: (_, p) => (p.cvData.sectionTitles, p.cvData.pageBreaks.contains('professionalSummary')),
+      builder: (context, data, _) {
+        final titles = data.$1;
         final provider = context.read<CVProvider>();
         
         // Find the actual summary content directly from the provider without passing the global controller.
@@ -25,11 +26,15 @@ class ProfessionalSummarySection extends StatelessWidget {
           title: ExpandableSectionTitle(
             sectionTitle: titles.professionalSummary,
             isVisibleOnCv: titles.showProfessionalSummary,
+            startsOnNewPage: provider.cvData.pageBreaks.contains('professionalSummary'),
             onTitleRenamed: (newTitle) {
               provider.updateSectionTitles(titles.copyWith(professionalSummary: newTitle));
             },
             onVisibilityToggled: () {
               provider.updateSectionTitles(titles.copyWith(showProfessionalSummary: !titles.showProfessionalSummary));
+            },
+            onToggleNewPage: () {
+              provider.togglePageBreak('professionalSummary');
             },
             onSectionRemoved: () {
               provider.removeSection('professionalSummary');

@@ -449,6 +449,7 @@ class CVData {
   List<Project> projects;
   List<CustomSection> customSections;
   List<String> sectionOrder;
+  List<String> pageBreaks;
   double baseFontSize;
   double lineHeight;
   String primaryColorHex;
@@ -477,6 +478,7 @@ class CVData {
     List<Project>? projects,
     List<CustomSection>? customSections,
     List<String>? sectionOrder,
+    List<String>? pageBreaks,
     this.baseFontSize = 10.0,
     this.lineHeight = 1.0,
     this.primaryColorHex = '#0D47A1',
@@ -496,6 +498,7 @@ class CVData {
         certifications = certifications ?? [],
         projects = projects ?? [],
         customSections = customSections ?? [],
+        pageBreaks = pageBreaks ?? [],
         sectionOrder = sectionOrder ?? [
           'personalInfo',
           'professionalSummary',
@@ -516,6 +519,7 @@ class CVData {
         'projects': projects.map((e) => e.toJson()).toList(),
         'customSections': customSections.map((e) => e.toJson()).toList(),
         'sectionOrder': sectionOrder,
+        'pageBreaks': pageBreaks,
         'baseFontSize': baseFontSize,
         'lineHeight': lineHeight,
         'primaryColorHex': primaryColorHex,
@@ -538,6 +542,7 @@ class CVData {
         projects: (json['projects'] as List?)?.map((e) => Project.fromJson(e)).toList(),
         customSections: (json['customSections'] as List?)?.map((e) => CustomSection.fromJson(e)).toList(),
         sectionOrder: (json['sectionOrder'] as List?)?.map((e) => e as String).toList(),
+        pageBreaks: (json['pageBreaks'] as List?)?.map((e) => e as String).toList(),
         baseFontSize: (json['baseFontSize'] as num?)?.toDouble() ?? 10.0,
         lineHeight: (json['lineHeight'] as num?)?.toDouble() ?? 1.0,
         primaryColorHex: json['primaryColorHex'] ?? '#0D47A1',
@@ -560,6 +565,7 @@ class CVData {
     List<Project>? projects,
     List<CustomSection>? customSections,
     List<String>? sectionOrder,
+    List<String>? pageBreaks,
     double? baseFontSize,
     double? lineHeight,
     String? primaryColorHex,
@@ -581,6 +587,7 @@ class CVData {
       projects: projects ?? this.projects,
       customSections: customSections ?? this.customSections,
       sectionOrder: sectionOrder ?? this.sectionOrder,
+      pageBreaks: pageBreaks ?? this.pageBreaks,
       baseFontSize: baseFontSize ?? this.baseFontSize,
       lineHeight: lineHeight ?? this.lineHeight,
       primaryColorHex: primaryColorHex ?? this.primaryColorHex,
